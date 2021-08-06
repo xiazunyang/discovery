@@ -3,5 +3,4 @@ jdk:
 install:
   - chmod +x gradlew
   - ./gradlew build
-  - ./gradlew tasks --all
-  - ./gradlew :publishToMavenLocal -xtest
+  - ./gradlew publishToMavenLocal
