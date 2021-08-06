@@ -1,0 +1,7 @@
+jdk:
+  - openjdk11
+install:
+  - chmod +x gradlew
+  - ./gradlew build
+  - ./gradlew tasks --all
+  - ./gradlew :plugin:publishToMavenLocal -xtest
