@@ -32,7 +32,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
         //通过MD5确定要修改的jar包。
         if (!::discoveryLibraryJarFilePath.isInitialized) {
             val md5Hex = DigestUtils.md5Hex(outputJarFile.readBytes())
-            if (md5Hex == "64654bc0c96777a7a5b824189f2bcbae") {
+            if (md5Hex == "71363accb5ca4178e6f1730a16533aca") {
                 discoveryLibraryJarFilePath = outputJarFile.absolutePath
             }
         }
