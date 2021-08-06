@@ -8,6 +8,7 @@ import org.gradle.internal.impldep.org.apache.commons.io.FileUtils
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import java.io.File
+import java.util.zip.ZipFile
 
 class DiscoveryTransform(project: Project) : AbstractTransform(project) {
 
@@ -31,8 +32,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
     override fun processJar(inputJarFile: File, outputJarFile: File) {
         //通过MD5确定要修改的jar包。
         if (!::discoveryLibraryJarFilePath.isInitialized) {
-            val md5Hex = DigestUtils.md5Hex(outputJarFile.readBytes())
-            if (md5Hex == "71363accb5ca4178e6f1730a16533aca") {
+            if (ZipFile(outputJarFile).hasClass(DISCOVERIES_CLASS)) {
                 discoveryLibraryJarFilePath = outputJarFile.absolutePath
             }
         }
@@ -97,6 +97,12 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
 
         //删除解压的文件
         unzipPath.deleteRecursively()
+    }
+
+    private companion object {
+
+        private const val DISCOVERIES_CLASS = "cn/numeron/discovery/Discoveries.class"
+
     }
 
 }

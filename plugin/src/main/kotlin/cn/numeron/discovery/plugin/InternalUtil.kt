@@ -48,6 +48,10 @@ fun File.walkReproducibly(): Sequence<File> = sequence {
     }
 }
 
+fun ZipFile.hasClass(className: String): Boolean {
+    val zipEntry = getEntry(className)
+    return zipEntry != null
+}
 
 private fun zipTo(zipFile: File, baseDir: File, files: Sequence<File>) {
     zipTo(zipFile, fileEntriesRelativeTo(baseDir, files))

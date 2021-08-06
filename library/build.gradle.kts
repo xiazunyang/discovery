@@ -12,10 +12,6 @@ tasks.withType<KotlinCompile> {
     }
 }
 
-dependencies {
-    testImplementation(gradleApi())
-}
-
 afterEvaluate {
     publishing {
         publications {
