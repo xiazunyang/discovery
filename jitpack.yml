@@ -4,4 +4,4 @@ install:
   - chmod +x gradlew
   - ./gradlew build
   - ./gradlew tasks --all
-  - ./gradlew :plugin:publishToMavenLocal -xtest
+  - ./gradlew :publishToMavenLocal -xtest
