@@ -27,7 +27,7 @@
 
 ### 安装
 
-当前最新版本：[![](https://img.shields.io/badge/MavenCentral-1.0.0-brightgreen)](https://jitpack.io/#cn.numeron/discovery)
+当前最新版本：[![](https://img.shields.io/badge/MavenCentral-1.0.0-brightgreen)](https://github.com/xiazunyang/discovery)
 
 1. 在根模块的`build.gradle`的适当位置添加以下代码：
     ```kotlin
