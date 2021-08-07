@@ -27,7 +27,7 @@
 
 ### 安装
 
-当前最新版本：[![](https://jitpack.io/v/cn.numeron/discovery.svg)](https://jitpack.io/#cn.numeron/discovery)
+当前最新版本：[![](https://img.shields.io/badge/MavenCentral-1.0.0-brightgreen)](https://jitpack.io/#cn.numeron/discovery)
 
 1. 在根模块的`build.gradle`的适当位置添加以下代码：
     ```kotlin
@@ -36,11 +36,10 @@
            google()
            mavenCentral()
            gradlePluginPortal()
-           maven("https://jitpack.io")
        }
        dependencies {
            //添加Discovery插件
-           classpath("cn.numeron.discovery:plugin:latest_version")
+           classpath("cn.numeron:discovery.plugin:1.0.0")
            //添加KSP插件
            classpath("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.5.21-1.0.0-beta06")
        }
@@ -62,9 +61,9 @@
    dependencies {
        ...
        //应用Discovery的KSP插件
-       ksp("cn.numeron.discovery:ksp:latest_version")
+       ksp("cn.numeron:discovery.ksp:1.0.0")
        //添加Discovery library库
-       implementation("cn.numeron.discovery:library:latest_version")
+       implementation("cn.numeron:discovery.library:1.0.0")
    }
    
    ...
