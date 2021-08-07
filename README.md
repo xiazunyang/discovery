@@ -17,11 +17,11 @@
 
 - `KSP`模块
 
-  - 在编译期间，获取所有被`Discoverable`注解标记的接口的信息，生成一个列表并记录下来。
+  - 在编译前，获取所有被`Discoverable`注解标记的接口的信息，生成一个列表并记录下来。
 
 - `AGP`模块
 
-  - 在编译过程中，扫描每个模块中的类文件，并将上述列表中接口的实现类通过`ASM`注册到`kotlin`模块的`Discoveries`类中。
+  - 在编译中，扫描每个模块中的类文件，并将上述列表中接口的实现类通过`ASM`注册到`kotlin`模块的`Discoveries`类中。
 
   
 
@@ -30,9 +30,8 @@
 当前最新版本：[![](https://jitpack.io/v/cn.numeron/discovery.svg)](https://jitpack.io/#cn.numeron/discovery)
 
 1. 在根模块的`build.gradle`的适当位置添加以下代码：
-
-   ```kotlin
-buildscript {
+    ```kotlin
+    buildscript {
        repositories {
            google()
            mavenCentral()
@@ -45,7 +44,7 @@ buildscript {
            //添加KSP插件
            classpath("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.5.21-1.0.0-beta06")
        }
-}
+    }
    ```
 
 2. 在需要使用`@Discoverable`注解的模块中的`build.gradle`文件中添加以下代码：
@@ -71,21 +70,21 @@ buildscript {
    ...
    
    ksp {
-   	//设置此模块的唯一标识和根项目的编译目录
+       //设置此模块的唯一标识和根项目的编译目录
        arg("projectName", "module-name")
        arg("rootProjectBuildDir", rootProject.buildDir.absolutePath)
    }
+   ```
 
 3. 在主模块的`build.gradle`文件中添加以下代码：
-
-   ```
-   plugins {
-		id("com.android.application")
-		...
-		//应用Discovery插件
-		id("discovery")
+    ```kotlin
+    plugins {
+        id("com.android.application")
+        ...
+        //应用Discovery插件
+        id("discovery")
    }
-   ```
+    ```
 
 ### 使用
 
@@ -97,11 +96,11 @@ buildscript {
     @Discoverable
     interface ISignInService {
     
-    	/** 判断当前是否已登录 */
-    	suspend fun isSignIn(context: Context): Boolean
+        /** 判断当前是否已登录 */
+        suspend fun isSignIn(context: Context): Boolean
     
-    	/** 通过用户名和密码进行登录 */
-    	suspend fun signInByPassword(username: String, password: String)
+        /** 通过用户名和密码进行登录 */
+        suspend fun signInByPassword(username: String, password: String)
   
   }
     ```
@@ -111,13 +110,13 @@ buildscript {
     ```kotlin
     class SignInServiceImpl: ISignInService {
     
-    	override suspend fun isSignIn(context: Context): Boolean {
-    		TODO()
-    	}
+        override suspend fun isSignIn(context: Context): Boolean {
+            TODO("判断是否已经登录")
+        }
     
-    	override suspend fun signInByPassword(username: String, password: String) {
-    		TODO()
-    	}
+        override suspend fun signInByPassword(username: String, password: String) {
+            TODO("根据提供的账号密码进行登录")
+        }
     
     }
     ```
@@ -136,7 +135,7 @@ buildscript {
 
     1. 在基础模块中声明初始化接口
 
-    ```
+    ```kotlin
     @Discoverable
     interface IInitiator {
     
@@ -147,33 +146,33 @@ buildscript {
     
     2. 在其它模块中实现该接口
     
-    ```
+    ```kotlin
     //需要初始化的A模块
     class AModuleInitiator: IInitiator {
-    	override fun init(application: Application) {
-    		//init a module
-    	}
+        override fun init(application: Application) {
+            //init a module
+        }
     }
     
     //需要初始化的B模块
     class BModuleInitiator: IInitiator {
-    	override fun init(application: Application) {
-    		//init b module
-    	}
+        override fun init(application: Application) {
+            //init b module
+        }
     }
     ```
     
     3. 在`Application`中获取所有实例并初始化
-    ```
+    ```kotlin
     class MyApplication: Application() {
     
-    	override fun onCreate() {
-    		//获取所有IInitiator的实现，并执行init方法
-    		List<IInitiator> initiatorList = Discoveries.getAllInstances<IInitiator>()
-    		initiatorList.forEach {
-    			it.init(this)
-    		}
-    	}
+        override fun onCreate() {
+            //获取所有IInitiator的实现，并执行init方法
+            val initiatorList = Discoveries.getAllInstances<IInitiator>()
+            initiatorList.forEach {
+                it.init(this)
+            }
+        }
     
     }
     ```

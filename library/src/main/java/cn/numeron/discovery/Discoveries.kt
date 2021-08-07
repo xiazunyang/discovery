@@ -4,10 +4,8 @@ import java.lang.ref.WeakReference
 
 /**
  * Discovery的单例实现
- * The singleton class of discovery.
  *
  * 通过此类中的[getInstance]和[getAllInstances]方法获取指定接口所有的实现类。
- * Get all implementation classes of the specified interface from the [getInstance] and [getAllInstances] methods in this class.
  */
 class Discoveries private constructor() {
 
