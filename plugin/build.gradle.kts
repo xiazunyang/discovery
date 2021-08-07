@@ -38,7 +38,7 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 from(components.getByName("java"))
                 groupId = "cn.numeron"
-                artifactId = "discovery.plugin"
+                artifactId = "plugin"
                 version = "1.0.0"
             }
         }

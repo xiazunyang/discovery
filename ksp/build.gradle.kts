@@ -23,7 +23,7 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 from(components.getByName("java"))
                 groupId = "cn.numeron"
-                artifactId = "discovery.ksp"
+                artifactId = "ksp"
                 version = "1.0.0"
             }
         }

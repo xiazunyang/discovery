@@ -18,7 +18,7 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 from(components.getByName("java"))
                 groupId = "cn.numeron"
-                artifactId = "discovery.core"
+                artifactId = "core"
                 version = "1.0.0"
             }
         }
