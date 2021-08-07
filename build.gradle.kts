@@ -2,7 +2,7 @@
 buildscript {
     repositories {
         google()
-        mavenLocal()
+        mavenCentral()
         gradlePluginPortal()
         maven("https://maven.aliyun.com/repository/google")
         maven("https://maven.aliyun.com/repository/central")
@@ -10,12 +10,14 @@ buildscript {
     }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.21")
+        classpath("com.vanniktech:gradle-maven-publish-plugin:0.17.0")
     }
 }
 
 subprojects {
     repositories {
         google()
+        mavenCentral()
         gradlePluginPortal()
         maven("https://maven.aliyun.com/repository/google")
         maven("https://maven.aliyun.com/repository/central")

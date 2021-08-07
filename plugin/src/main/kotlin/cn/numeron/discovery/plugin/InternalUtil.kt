@@ -48,7 +48,7 @@ fun File.walkReproducibly(): Sequence<File> = sequence {
     }
 }
 
-fun ZipFile.hasClass(className: String): Boolean {
+fun ZipFile.hasEntry(className: String): Boolean {
     val zipEntry = getEntry(className)
     return zipEntry != null
 }

@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("kotlin")
-    id("maven-publish")
+    id("com.vanniktech.maven.publish")
 }
 
 tasks.withType<KotlinCompile> {
@@ -17,15 +17,6 @@ dependencies {
     implementation("com.google.devtools.ksp:symbol-processing-api:1.5.21-1.0.0-beta06")
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            create<MavenPublication>("release") {
-                from(components.getByName("java"))
-                groupId = "cn.numeron"
-                artifactId = "ksp"
-                version = "1.0.0"
-            }
-        }
-    }
+mavenPublish {
+    sonatypeHost = com.vanniktech.maven.publish.SonatypeHost.S01
 }

@@ -3,12 +3,11 @@ package cn.numeron.discovery.plugin
 import cn.numeron.discovery.core.DiscoverableImpl
 import cn.numeron.discovery.core.DiscoveryCore
 import org.gradle.api.Project
-import org.gradle.internal.impldep.org.apache.commons.codec.digest.DigestUtils
 import org.gradle.internal.impldep.org.apache.commons.io.FileUtils
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import java.io.File
-import java.util.zip.ZipFile
+import java.util.jar.JarFile
 
 class DiscoveryTransform(project: Project) : AbstractTransform(project) {
 
@@ -32,7 +31,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
     override fun processJar(inputJarFile: File, outputJarFile: File) {
         //通过MD5确定要修改的jar包。
         if (!::discoveryLibraryJarFilePath.isInitialized) {
-            if (ZipFile(outputJarFile).hasClass(DISCOVERIES_CLASS)) {
+            if (JarFile(outputJarFile).hasEntry(DISCOVERIES_CLASS)) {
                 discoveryLibraryJarFilePath = outputJarFile.absolutePath
             }
         }
@@ -48,7 +47,10 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
         classesDir.walkTopDown()
             .filter {
                 val filename = it.name
-                filename.endsWith(".class") && !filename.startsWith("BuildConfig")
+                filename.endsWith(".class") &&
+                        !filename.startsWith("BuildConfig") &&
+                        !filename.startsWith("R$") &&
+                        filename != "R.class"
             }
             .forEach {
                 val classReader = ClassReader(it.readBytes())

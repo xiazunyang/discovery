@@ -8,7 +8,6 @@ object DiscoveryCore {
 
     const val PROJECT_NAME = "projectName"
     const val ROOT_PROJECT_BUILD_DIR = "rootProjectBuildDir"
-    const val DISCOVERIES_CLASS_NAME = "cn.numeron.discovery.Discoveries"
 
     private const val DISCOVERABLE_DIR_NAME = "discoverable"
     private const val IMPLEMENTATION_DIR_NAME = "implementation"
