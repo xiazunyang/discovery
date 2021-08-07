@@ -3,4 +3,4 @@ jdk:
 install:
   - chmod +x gradlew
   - ./gradlew build
-  - ./gradlew publishToMavenLocal
+  - ./gradlew publishToMavenLocal -Pgroup=cn.numeron

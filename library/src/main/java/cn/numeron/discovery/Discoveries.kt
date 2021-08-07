@@ -17,10 +17,6 @@ class Discoveries private constructor() {
     /** 记录已发现的服务 */
     private val discovered = mutableMapOf<String, MutableList<String>>()
 
-    inline fun <reified T> getInstance() = getInstance(T::class.java)
-
-    inline fun <reified T> getAllInstances() = getAllInstances(T::class.java)
-
     fun <T> getInstance(clazz: Class<T>): T {
         if (!clazz.isInterface) {
             throw DiscoveryException("Parameter must be a interface: $clazz.")
@@ -62,6 +58,10 @@ class Discoveries private constructor() {
 
         @JvmStatic
         val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED, ::Discoveries)
+
+        inline fun <reified T> getInstance() = instance.getInstance(T::class.java)
+
+        inline fun <reified T> getAllInstances() = instance.getAllInstances(T::class.java)
 
     }
 
