@@ -24,6 +24,8 @@ dependencies {
 
     implementation("com.android.tools.build:gradle:7.0.0")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.21")
+
+    testImplementation("junit:junit:4.13.2")
 }
 
 tasks.withType<Jar> {

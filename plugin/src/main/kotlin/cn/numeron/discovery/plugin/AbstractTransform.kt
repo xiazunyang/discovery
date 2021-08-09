@@ -43,8 +43,8 @@ abstract class AbstractTransform(protected val project: Project) : Transform() {
                     FileUtils.copyFile(jarInput.file, outputJarFile)
                 }
                 if (!isIncremental || jarInput.status != Status.REMOVED) {
-                    //处理jar
-                    processJar(jarInput.file, outputJarFile)
+                    //在输出目录中处理jar
+                    processJar(jarInput, outputJarFile)
                 }
             }
 
@@ -54,8 +54,8 @@ abstract class AbstractTransform(protected val project: Project) : Transform() {
                     dirInput.name, dirInput.contentTypes, dirInput.scopes, Format.DIRECTORY
                 )
                 FileUtils.copyDirectory(dirInput.file, outputDir)
-                //处理本地class
-                processDirectory(dirInput.file, outputDir)
+                //在输出目录中处理本地class
+                processDirectory(dirInput, outputDir)
             }
         }
         onTransformed()
@@ -73,9 +73,9 @@ abstract class AbstractTransform(protected val project: Project) : Transform() {
         project.logger.log(LogLevel.WARN, message, *args)
     }
 
-    protected open fun processJar(inputJarFile: File, outputJarFile: File) = Unit
+    protected open fun processJar(jarInput: JarInput, outputJarFile: File) = Unit
 
-    protected open fun processDirectory(inputDirFile: File, outputDirFile: File) = Unit
+    protected open fun processDirectory(dirInput: DirectoryInput, outputDirFile: File) = Unit
 
     protected open fun onTransformed() = Unit
 

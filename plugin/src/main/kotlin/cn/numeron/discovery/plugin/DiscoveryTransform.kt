@@ -1,12 +1,17 @@
+@file:Suppress("DEPRECATION")
+
 package cn.numeron.discovery.plugin
 
 import cn.numeron.discovery.core.DiscoverableImpl
 import cn.numeron.discovery.core.DiscoveryCore
+import com.android.build.api.transform.DirectoryInput
+import com.android.build.api.transform.JarInput
+import com.android.build.api.transform.QualifiedContent
 import org.gradle.api.Project
-import org.gradle.internal.impldep.org.apache.commons.io.FileUtils
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import java.io.File
+import java.io.InputStream
 import java.util.jar.JarFile
 
 class DiscoveryTransform(project: Project) : AbstractTransform(project) {
@@ -24,44 +29,56 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
 
     override fun isIncremental(): Boolean = true
 
-    override fun processDirectory(inputDirFile: File, outputDirFile: File) {
-        scanClasses(outputDirFile)
+    override fun processDirectory(dirInput: DirectoryInput, outputDirFile: File) {
+        outputDirFile.walkTopDown()
+            .filter {
+                it.isFile && isClassFile(it.name)
+            }
+            .forEach {
+                scanClasses(it.readBytes())
+            }
     }
 
-    override fun processJar(inputJarFile: File, outputJarFile: File) {
-        //通过MD5确定要修改的jar包。
+    override fun processJar(jarInput: JarInput, outputJarFile: File) {
+        //通过jar包中有没有指定的class文件，确定是不是要找的jar包
+        val jarFile = JarFile(outputJarFile)
         if (!::discoveryLibraryJarFilePath.isInitialized) {
-            if (JarFile(outputJarFile).hasEntry(DISCOVERIES_CLASS)) {
+            if (jarFile.hasEntry(DISCOVERIES_CLASS)) {
                 discoveryLibraryJarFilePath = outputJarFile.absolutePath
             }
         }
         //只扫描工程中的源码文件
-        if (inputJarFile.name.endsWith("classes.jar")) {
-            val unzipPath = outputJarFile.unzipTo()
-            scanClasses(unzipPath)
-            FileUtils.deleteDirectory(unzipPath)
+        if (jarInput.scopes.contains(QualifiedContent.Scope.SUB_PROJECTS)) {
+            jarFile.entries()
+                .asSequence()
+                .filter {
+                    val name = it.name.substringAfterLast('/')
+                    !it.isDirectory && isClassFile(name)
+                }
+                .forEach {
+                    val classBytes = jarFile.getInputStream(it).use(InputStream::readBytes)
+                    scanClasses(classBytes)
+                }
         }
     }
 
-    private fun scanClasses(classesDir: File) {
-        classesDir.walkTopDown()
-            .filter {
-                val filename = it.name
-                filename.endsWith(".class") &&
-                        !filename.startsWith("BuildConfig") &&
-                        !filename.startsWith("R$") &&
-                        filename != "R.class"
-            }
-            .forEach {
-                val classReader = ClassReader(it.readBytes())
-                val className = classReader.className.toClassName()
-                val interfaces = classReader.interfaces.map(String::toClassName)
-                val discoverable = discoverableSet.find(interfaces::contains)
-                wLog("discoverable = [$discoverable], className = [$className], interfaces = $interfaces")
-                if (discoverable != null) {
-                    implementationSet.add(DiscoverableImpl(className, discoverable))
-                }
-            }
+    private fun isClassFile(fileName: String): Boolean {
+        return fileName.endsWith(".class")
+                && fileName != "R.class"
+                && !fileName.startsWith("BuildConfig")
+                && !fileName.startsWith("R$")
+    }
+
+    /** 解析class文件，记录需要处理的class文件的路径 */
+    private fun scanClasses(classBytes: ByteArray) {
+        val classReader = ClassReader(classBytes)
+        val className = classReader.className.toClassName()
+        val interfaces = classReader.interfaces.map(String::toClassName)
+        val discoverable = discoverableSet.find(interfaces::contains)
+        wLog("discoverable = [$discoverable], className = [$className], interfaces = $interfaces")
+        if (discoverable != null) {
+            implementationSet.add(DiscoverableImpl(className, discoverable))
+        }
     }
 
     override fun onTransformed() {
@@ -101,9 +118,9 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
         unzipPath.deleteRecursively()
     }
 
-    private companion object {
+    companion object {
 
-        private const val DISCOVERIES_CLASS = "cn/numeron/discovery/Discoveries.class"
+        const val DISCOVERIES_CLASS = "cn/numeron/discovery/Discoveries.class"
 
     }
 

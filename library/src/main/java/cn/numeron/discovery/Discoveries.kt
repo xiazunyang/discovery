@@ -28,14 +28,15 @@ class Discoveries private constructor() {
         if (!clazz.isInterface) {
             throw DiscoveryException("Parameter must be a interface: $clazz.")
         }
-        val implementationList = (discovered[clazz.name]
-            ?: throw DiscoveryException("The implementation was not found: $clazz."))
+        val implementationList = discovered[clazz.name]
+            ?: throw DiscoveryException("The implementation was not found: $clazz.")
         return implementationList
             .map(::getOrPutInstance)
             .map(clazz::cast)
     }
 
     /** 从缓存中获取实例，如果没有，则创建一条保存到缓存中并返回 */
+    @Suppress("DEPRECATION")
     private fun getOrPutInstance(className: String): Any {
         var instance = instanceOfMap[className]?.get()
         if (instance != null) {
