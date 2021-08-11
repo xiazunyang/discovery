@@ -12,6 +12,10 @@ tasks.withType<KotlinCompile> {
     }
 }
 
+dependencies {
+    testImplementation("junit:junit:4.13.2")
+}
+
 mavenPublish {
     sonatypeHost = com.vanniktech.maven.publish.SonatypeHost.S01
 }
