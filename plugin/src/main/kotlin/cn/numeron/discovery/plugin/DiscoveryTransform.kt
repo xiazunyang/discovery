@@ -19,7 +19,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
     private val discoverableSet by lazy(DiscoveryCore::loadDiscoverable)
     private val implementationSet by lazy(DiscoveryCore::loadImplementation)
 
-    private lateinit var discoveryLibraryJarFilePath: String
+    private var discoveryLibraryJarFilePath: String? = null
 
     init {
         DiscoveryCore.init(project.name, project.rootProject.buildDir.absolutePath)
@@ -42,7 +42,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
     override fun processJar(jarInput: JarInput, outputJarFile: File) {
         //通过jar包中有没有指定的class文件，确定是不是要找的jar包
         val jarFile = JarFile(outputJarFile)
-        if (!::discoveryLibraryJarFilePath.isInitialized) {
+        if (discoveryLibraryJarFilePath == null) {
             if (jarFile.hasEntry(DISCOVERIES_CLASS)) {
                 discoveryLibraryJarFilePath = outputJarFile.absolutePath
             }
@@ -94,12 +94,12 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
             }
 
         //获取Discoveries.class所在的jar包
-        val jarFile = File(discoveryLibraryJarFilePath)
+        val jarFile = File(discoveryLibraryJarFilePath ?: throw NullPointerException("Not found Discovery Library."))
 
         //解压，获取Discoveries.class
         val unzipPath = jarFile.unzipTo()
         val classFile = unzipPath.walkTopDown().first {
-            it.name == "Discoveries.class"
+            it.isFile && it.name == "Discoveries.class"
         }
 
         //修改字节码
