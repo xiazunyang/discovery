@@ -25,7 +25,7 @@
 
 ### 安装
 
-当前最新版本：[![](https://img.shields.io/badge/MavenCentral-1.0.0-brightgreen)](https://github.com/xiazunyang/discovery)
+当前最新版本：[![](https://img.shields.io/badge/MavenCentral-1.1.0-brightgreen)](https://github.com/xiazunyang/discovery)
 
 1. 在根模块的`build.gradle`的适当位置添加以下代码：
     ```kotlin
@@ -72,7 +72,7 @@
        arg("rootProjectBuildDir", rootProject.buildDir.absolutePath)
    }
    ```
-  * `APT`方式
+    * `APT`方式
     ```kotlin
      plugins {
          id("com.android.library")
@@ -163,7 +163,7 @@
 
     ```kotlin
     @Discoverable
-    interface IInitiator {
+    interface IInitializer {
     
         fun init(application: Application)
     
@@ -174,14 +174,14 @@
     
     ```kotlin
     //需要初始化的A模块
-    class AModuleInitiator: IInitiator {
+    class AModuleInitializer: IInitializer {
         override fun init(application: Application) {
             //init a module
         }
     }
     
     //需要初始化的B模块
-    class BModuleInitiator: IInitiator {
+    class BModuleInitializer: IInitializer {
         override fun init(application: Application) {
             //init b module
         }
@@ -194,8 +194,8 @@
     
         override fun onCreate() {
             //获取所有IInitiator的实现，并执行init方法
-            val initiatorList = Discoveries.getAllInstances<IInitiator>()
-            initiatorList.forEach {
+            val initializerList = Discoveries.getAllInstances<IInitializer>()
+            initializerList.forEach {
                 it.init(this)
             }
         }
