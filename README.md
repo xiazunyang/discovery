@@ -1,6 +1,6 @@
 ## Discovery
 
-通过`KSP`及`AGP`实现的在Android工程多模块之间获取接口的实例对象的辅助工具。
+通过`KSP/APT`及`AGP`实现的在Android工程多模块之间获取接口的实例对象的辅助工具。
 
 通过在接口上添加`@Discoverable`注解后，在工程中的任意模块中通过`Discoveries`类获取该接口的实例，辅助开发者在模块之间访问数据。
 
@@ -8,19 +8,17 @@
 
 ### 原理
 
-`Discovery`由3个模块构成，分别是基于`Kotlin Symbol Processor`的注解处理器模块、基于`Android Gradle Plugin`的插件模块以及一个`kotlin`库模块。
+`Discovery`由3个功能模块构成，分别是注解处理器模块、`Gradle`插件模块以及一个`kotlin`库模块。
 
 
 
 - `kotlin`模块
-  - 包含一个`Discovrable`注解，及一个`Discovries`类。
+  - 包含一个`Discoverable`注解，及一个`Discoveries`类。
 
-- `KSP`模块
-
+- 注解处理器模块
   - 在编译前，获取所有被`Discoverable`注解标记的接口的信息，生成一个列表并记录下来。
 
-- `AGP`模块
-
+- `Gradle`插件模块
   - 在编译中，扫描每个模块中的类文件，并将上述列表中接口的实现类通过`ASM`注册到`kotlin`模块的`Discoveries`类中。
 
   
@@ -40,14 +38,14 @@
        dependencies {
            //添加Discovery插件
            classpath("cn.numeron:discovery.plugin:1.0.0")
-           //添加KSP插件
+           //添加KSP插件，如果使用APT，则不需要添加
            classpath("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.5.21-1.0.0-beta06")
        }
     }
    ```
 
-2. 在需要使用`@Discoverable`注解的模块中的`build.gradle`文件中添加以下代码：
-
+2. 在需要使用`@Discoverable`注解的模块中启用注解处理器，选择`apt`或`ksp`其中的一种配置即可。
+   - `KSP`方式
    ```kotlin
    plugins {
        id("com.android.library")
@@ -69,11 +67,40 @@
    ...
    
    ksp {
-       //设置此模块的唯一标识和根项目的编译目录
+       //设置此模块的唯一标识和编译根目录
        arg("projectName", "module-name")
        arg("rootProjectBuildDir", rootProject.buildDir.absolutePath)
    }
    ```
+  * `APT`方式
+    ```kotlin
+     plugins {
+         id("com.android.library")
+         ...
+         //应用kapt插件
+         id("kotlin.kapt")
+     }
+     
+     ...
+     
+     dependencies {
+         ...
+         //应用Discovery的KSP插件
+         kapt("cn.numeron:discovery.apt:1.0.0")
+         //添加Discovery library库
+         implementation("cn.numeron:discovery.library:1.0.0")
+     }
+     
+     ...
+     
+     kapt {
+        arguments {
+            //设置此模块的唯一标识和编译根目录
+            arg("projectName", "asset-api")
+            arg("rootProjectBuildDir", rootProject.buildDir.absolutePath)
+        }
+     }
+     ```
 
 3. 在主模块的`build.gradle`文件中添加以下代码：
     ```kotlin
