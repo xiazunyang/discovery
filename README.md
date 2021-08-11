@@ -37,7 +37,7 @@
        }
        dependencies {
            //添加Discovery插件
-           classpath("cn.numeron:discovery.plugin:1.0.0")
+           classpath("cn.numeron:discovery.plugin:1.1.0")
            //添加KSP插件，如果使用APT，则不需要添加
            classpath("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.5.21-1.0.0-beta06")
        }
@@ -59,9 +59,9 @@
    dependencies {
        ...
        //应用Discovery的KSP插件
-       ksp("cn.numeron:discovery.ksp:1.0.0")
+       ksp("cn.numeron:discovery.ksp:1.1.0")
        //添加Discovery library库
-       implementation("cn.numeron:discovery.library:1.0.0")
+       implementation("cn.numeron:discovery.library:1.1.0")
    }
    
    ...
@@ -85,10 +85,10 @@
      
      dependencies {
          ...
-         //应用Discovery的KSP插件
-         kapt("cn.numeron:discovery.apt:1.0.0")
+         //应用Discovery的APT插件
+         kapt("cn.numeron:discovery.apt:1.1.0")
          //添加Discovery library库
-         implementation("cn.numeron:discovery.library:1.0.0")
+         implementation("cn.numeron:discovery.library:1.1.0")
      }
      
      ...
