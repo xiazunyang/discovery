@@ -1,7 +1,6 @@
 package cn.numeron.discovery.ksp
 
 import cn.numeron.discovery.core.DiscoverableImpl
-import com.google.devtools.ksp.isInternal
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.*
 

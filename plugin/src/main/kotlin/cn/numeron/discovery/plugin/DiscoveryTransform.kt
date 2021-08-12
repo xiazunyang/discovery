@@ -20,7 +20,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
     private val discoverableSet by lazy(DiscoveryCore::loadDiscoverable)
     private val implementationSet by lazy(DiscoveryCore::loadImplementation)
 
-    private val isPassiveScan by lazy {
+    private val isMarkMode by lazy {
         DiscoveryCore.loadConfig().mode == Modes.Mark
     }
 
@@ -36,7 +36,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
     override fun isIncremental(): Boolean = true
 
     override fun processDirectory(dirInput: DirectoryInput, outputDirFile: File) {
-        if (isPassiveScan) {
+        if (isMarkMode) {
             //如果配置为消极模式，则直接返回
             return
         }
@@ -57,7 +57,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
                 discoveryLibraryJarFilePath = outputJarFile.absolutePath
             }
         }
-        if (isPassiveScan) {
+        if (isMarkMode) {
             //如果配置为消极模式，则直接返回
             return
         }
@@ -97,7 +97,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
 
     override fun onTransformed() {
         wLog("implementation = $implementationSet")
-        if (!isPassiveScan) {
+        if (!isMarkMode) {
             //如果是主动的处理方式，则将扫描到的结果保存起来，否则无需保存
             DiscoveryCore.saveImplementation(implementationSet)
         }
