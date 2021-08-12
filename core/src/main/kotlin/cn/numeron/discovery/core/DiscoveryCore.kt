@@ -9,6 +9,7 @@ object DiscoveryCore {
     const val PROJECT_NAME = "projectName"
     const val ROOT_PROJECT_BUILD_DIR = "rootProjectBuildDir"
 
+    private const val DISCOVERY_CONFIG_NAME = "config"
     private const val DISCOVERABLE_DIR_NAME = "discoverable"
     private const val IMPLEMENTATION_DIR_NAME = "implementation"
 
@@ -82,6 +83,31 @@ object DiscoveryCore {
                 }
             }
         return implementationSet.toMutableSet()
+    }
+
+    /** 保存Discovery的配置 */
+    fun saveConfig(config: DiscoveryConfig) {
+        val configFile = File(rootProjectBuildDir, DISCOVERY_CONFIG_NAME)
+        if (!configFile.parentFile.exists()) {
+            configFile.parentFile.mkdirs()
+        }
+        ObjectOutputStream(configFile.outputStream()).use {
+            val discoveryConfig = DiscoveryConfig()
+            discoveryConfig.mode = config.mode
+            it.writeObject(discoveryConfig)
+        }
+    }
+
+    /** 获取Discovery的配置 */
+    fun loadConfig(): DiscoveryConfig {
+        val configFile = File(rootProjectBuildDir, DISCOVERY_CONFIG_NAME)
+        return try {
+            ObjectInputStream(configFile.inputStream()).use {
+                it.readObject() as DiscoveryConfig
+            }
+        } catch (e: Throwable) {
+            DiscoveryConfig()
+        }
     }
 
 }

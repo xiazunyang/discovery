@@ -1,6 +1,8 @@
 package cn.numeron.discovery.ksp
 
+import cn.numeron.discovery.core.DiscoveryConfig
 import cn.numeron.discovery.core.DiscoveryCore
+import cn.numeron.discovery.core.Modes
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
@@ -8,31 +10,44 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 
 class DiscoveryProcessor(private val env: SymbolProcessorEnvironment) : SymbolProcessor {
 
-    private val discoverableSet = mutableSetOf<String>()
-    private val visitor = DiscoverableVisitor(discoverableSet, env)
+    private val discoveryConfig: DiscoveryConfig
+    private val discoverableVisitor = DiscoverableVisitor(env)
+    private val implementationVisitor = ImplementationVisitor(env)
 
     init {
         val projectName = env.options[DiscoveryCore.PROJECT_NAME]
         val rootProjectBuildDir = env.options[DiscoveryCore.ROOT_PROJECT_BUILD_DIR]
         DiscoveryCore.init(projectName, rootProjectBuildDir)
+        discoveryConfig = DiscoveryCore.loadConfig()
     }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        //获取所有被该注解标记的类
+        //获取所有被Discoverable注解标记的类
         resolver.getSymbolsWithAnnotation(DISCOVERABLE).forEach {
-            it.accept(visitor, Unit)
+            it.accept(discoverableVisitor, Unit)
+        }
+        if (discoveryConfig.mode == Modes.Mark) {
+            //如果配置为标记模式，则扫描被Implementation标记的类
+            resolver.getSymbolsWithAnnotation(IMPLEMENTATION).forEach {
+                it.accept(implementationVisitor, Unit)
+            }
         }
         return emptyList()
     }
 
     override fun finish() {
-        DiscoveryCore.saveDiscoverable(discoverableSet)
-        env.logger.info("discovery processor finish. found discoverable: $discoverableSet")
+        DiscoveryCore.saveDiscoverable(discoverableVisitor.discoverableSet)
+        env.logger.info("discovery processor finish. found discoverable: ${discoverableVisitor.discoverableSet}")
+        if (discoveryConfig.mode == Modes.Mark) {
+            DiscoveryCore.saveImplementation(implementationVisitor.implementationSet)
+            env.logger.info("discovery processor finish. found implementation: ${implementationVisitor.implementationSet}")
+        }
     }
 
     private companion object {
 
         private const val DISCOVERABLE = "cn.numeron.discovery.Discoverable"
+        private const val IMPLEMENTATION = "cn.numeron.discovery.Implementation"
 
     }
 

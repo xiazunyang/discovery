@@ -4,6 +4,7 @@ package cn.numeron.discovery.plugin
 
 import cn.numeron.discovery.core.DiscoverableImpl
 import cn.numeron.discovery.core.DiscoveryCore
+import cn.numeron.discovery.core.Modes
 import com.android.build.api.transform.DirectoryInput
 import com.android.build.api.transform.JarInput
 import com.android.build.api.transform.QualifiedContent
@@ -19,6 +20,11 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
     private val discoverableSet by lazy(DiscoveryCore::loadDiscoverable)
     private val implementationSet by lazy(DiscoveryCore::loadImplementation)
 
+    private val isPassiveScan by lazy {
+        DiscoveryCore.loadConfig().mode == Modes.Mark
+    }
+
+    /** Discovery库的jar文件路径 */
     private var discoveryLibraryJarFilePath: String? = null
 
     init {
@@ -30,6 +36,10 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
     override fun isIncremental(): Boolean = true
 
     override fun processDirectory(dirInput: DirectoryInput, outputDirFile: File) {
+        if (isPassiveScan) {
+            //如果配置为消极模式，则直接返回
+            return
+        }
         outputDirFile.walkTopDown()
             .filter {
                 it.isFile && isClassFile(it.name)
@@ -46,6 +56,10 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
             if (jarFile.hasEntry(DISCOVERIES_CLASS)) {
                 discoveryLibraryJarFilePath = outputJarFile.absolutePath
             }
+        }
+        if (isPassiveScan) {
+            //如果配置为消极模式，则直接返回
+            return
         }
         //只扫描工程中的源码文件
         if (jarInput.scopes.contains(QualifiedContent.Scope.SUB_PROJECTS)) {
@@ -83,7 +97,10 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
 
     override fun onTransformed() {
         wLog("implementation = $implementationSet")
-        DiscoveryCore.saveImplementation(implementationSet)
+        if (!isPassiveScan) {
+            //如果是主动的处理方式，则将扫描到的结果保存起来，否则无需保存
+            DiscoveryCore.saveImplementation(implementationSet)
+        }
 
         //整理为需要的格式
         val discoverableImpl = implementationSet

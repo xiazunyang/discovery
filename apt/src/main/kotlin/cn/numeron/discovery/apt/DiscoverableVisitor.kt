@@ -5,15 +5,17 @@ import javax.lang.model.element.ElementKind
 import javax.lang.model.element.TypeElement
 import javax.lang.model.util.SimpleElementVisitor9
 
-class DiscoverableVisitor(
-    private val discoverableSet: MutableSet<String>,
-    private val processingEnv: ProcessingEnvironment
-) : SimpleElementVisitor9<Unit, Unit>(Unit) {
+class DiscoverableVisitor(private val processingEnv: ProcessingEnvironment) : SimpleElementVisitor9<Unit, Unit>(Unit) {
+
+    private val discoverableMutableSet = mutableSetOf<String>()
+
+    val discoverableSet: Set<String>
+        get() = discoverableMutableSet
 
     override fun visitType(element: TypeElement, p: Unit) {
         if (element.kind == ElementKind.INTERFACE) {
             val discoverable = element.qualifiedName.toString()
-            discoverableSet.add(discoverable)
+            discoverableMutableSet.add(discoverable)
         }
     }
 
