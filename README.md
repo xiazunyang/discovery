@@ -19,7 +19,7 @@
 
 ### 安装
 
-当前最新版本：[![Maven Central](https://maven-badges.herokuapp.com/maven-central/cn.numeron/discovery.core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/cn.numeron/discovery.core)
+当前最新版本：[![Maven Central](https://maven-badges.herokuapp.com/maven-central/cn.numeron/discovery.core/badge.svg)](https://mvnrepository.com/artifact/cn.numeron)
 
 1. 在根模块的`build.gradle`的适当位置添加以下代码：
     ```kotlin
@@ -218,6 +218,9 @@
     ```
 
 ### 版本更新记录
+
+- 1.2.1
+    1. 当`Implementation`注解标记的类实现了多个接口时，会忽略掉未被`Discovrable`注解标记的接口。
 
 - 1.2.0
     1. 新增`Discovery`的配置选项，可配置实现类的处理方式。
