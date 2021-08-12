@@ -106,6 +106,10 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
         val discoverableImpl = implementationSet
             .groupBy(DiscoverableImpl::discoverableName)
             .toMap()
+            .filter {
+                //忽略没有注册过的接口
+                it.key in discoverableSet
+            }
             .mapValues {
                 it.value.map(DiscoverableImpl::qualifierName)
             }
