@@ -4,6 +4,8 @@
 
 通过在接口上添加`@Discoverable`注解后，在工程中的任意模块中通过`Discoveries`类获取该接口的实例，辅助开发者在模块之间访问数据。
 
+演示工程：https://github.com/xiazunyang/DiscoveryDemo.git
+
 ### 原理
 
 `Discovery`由3个功能模块构成，分别是注解处理器模块、`Gradle`插件模块以及一个`kotlin`库模块。
