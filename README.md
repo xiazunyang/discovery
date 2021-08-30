@@ -38,7 +38,7 @@
            //添加Discovery插件
            classpath("cn.numeron:discovery.plugin:latest_version")
            //添加KSP插件，如果使用APT，则不需要添加
-           classpath("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.5.21-1.0.0-beta06")
+           classpath("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.5.30-1.0.0-beta08")
        }
     }
    ```
@@ -117,11 +117,11 @@
     ```kotlin
     //在应用了Discovery插件的模块的build.gradle文件中添加以下代码
     discovery {
-        //Discovery有Scan和Mark两种工作模式
-        //Scan为默认工作模式，会扫描除依赖以外所有的类文件
-        //Mark为可选的工作模式，此模式下只会处理被Implementation注解标记的类文件
-        //Mark模式需要在每一个实现类上添加Implementation注解，并配置注解处理器方可工作
-        mode = cn.numeron.discovery.core.Modes.Mark
+        //Discovery有scan和mark两种工作模式
+        //scan为默认工作模式，会扫描除依赖以外所有的类文件
+        //mark为可选的工作模式，此模式下只会处理被Implementation注解标记的类文件
+        //mark模式需要在每一个实现类上添加Implementation注解，并配置注解处理器方可工作
+        mode = "mark"
     }
     ```
 
@@ -221,15 +221,19 @@
 
 ### 版本更新记录
 
+- 1.2.2
+    * 使用字符串作为配置名称，不再需要冗长的导包。
+    * 编译时检查`Implementation`标记的类，要求必需拥有无参构造方法。
+
 - 1.2.1
-    1. 当`Implementation`注解标记的类实现了多个接口时，会忽略掉未被`Discovrable`注解标记的接口。
+    * 当`Implementation`注解标记的类实现了多个接口时，会忽略掉未被`Discovrable`注解标记的接口。
 
 - 1.2.0
-    1. 新增`Discovery`的配置选项，可配置实现类的处理方式。
-    2. 默认为`Scan`模式，即全局扫描，可配置为`Mark`模式，需要使用`Implementation`注解标记实现类，可免去扫描过程，以节省编译时间。
+    * 新增`Discovery`的配置选项，可配置实现类的处理方式。
+    * 默认为`Scan`模式，即全局扫描，可配置为`Mark`模式，需要使用`Implementation`注解标记实现类，可免去扫描过程，以节省编译时间。
 
 - 1.1.0
-    1. 注解处理器新增`APT`的实现，兼容`java`项目，与`KSP`任选其一即可。
+    * 注解处理器新增`APT`的实现，兼容`java`项目，与`KSP`任选其一即可。
 
 - 1.0.0
-    1. 正式发布，由`KSP`和`AGP`实现主要功能。
+    * 正式发布，由`KSP`和`AGP`实现主要功能。

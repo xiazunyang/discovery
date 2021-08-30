@@ -21,7 +21,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
     private val implementationSet by lazy(DiscoveryCore::loadImplementation)
 
     private val isMarkMode by lazy {
-        DiscoveryCore.loadConfig().mode == Modes.Mark
+        DiscoveryCore.loadConfig().workMode == Modes.Mark
     }
 
     /** Discovery库的jar文件路径 */

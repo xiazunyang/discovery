@@ -26,7 +26,7 @@ class DiscoveryProcessor(private val env: SymbolProcessorEnvironment) : SymbolPr
         resolver.getSymbolsWithAnnotation(DISCOVERABLE).forEach {
             it.accept(discoverableVisitor, Unit)
         }
-        if (discoveryConfig.mode == Modes.Mark) {
+        if (discoveryConfig.workMode == Modes.Mark) {
             //如果配置为标记模式，则扫描被Implementation标记的类
             resolver.getSymbolsWithAnnotation(IMPLEMENTATION).forEach {
                 it.accept(implementationVisitor, Unit)
@@ -38,7 +38,7 @@ class DiscoveryProcessor(private val env: SymbolProcessorEnvironment) : SymbolPr
     override fun finish() {
         DiscoveryCore.saveDiscoverable(discoverableVisitor.discoverableSet)
         env.logger.info("discovery processor finish. found discoverable: ${discoverableVisitor.discoverableSet}")
-        if (discoveryConfig.mode == Modes.Mark) {
+        if (discoveryConfig.workMode == Modes.Mark) {
             DiscoveryCore.saveImplementation(implementationVisitor.implementationSet)
             env.logger.info("discovery processor finish. found implementation: ${implementationVisitor.implementationSet}")
         }

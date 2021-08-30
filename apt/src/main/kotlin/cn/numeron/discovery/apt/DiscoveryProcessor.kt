@@ -37,7 +37,7 @@ class DiscoveryProcessor : AbstractProcessor() {
 
     override fun getSupportedAnnotationTypes(): MutableSet<String> {
         val mutableSet = mutableSetOf(DISCOVERABLE)
-        if (discoveryConfig.mode == Modes.Mark) {
+        if (discoveryConfig.workMode == Modes.Mark) {
             //如果工作模式为标记的话，则添加Implementation注解
             mutableSet.add(IMPLEMENTATION)
         }
@@ -49,7 +49,7 @@ class DiscoveryProcessor : AbstractProcessor() {
             it.accept(discoverableVisitor, Unit)
         }
         DiscoveryCore.saveDiscoverable(discoverableVisitor.discoverableSet)
-        if (discoveryConfig.mode == Modes.Mark) {
+        if (discoveryConfig.workMode == Modes.Mark) {
             //如果工作模式为标记的话，则扫描Implementation
             roundEnv.getElementsAnnotatedWith(elementUtils.getTypeElement(IMPLEMENTATION)).forEach {
                 it.accept(implementationVisitor, Unit)

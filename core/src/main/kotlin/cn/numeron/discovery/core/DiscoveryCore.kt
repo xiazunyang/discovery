@@ -93,7 +93,7 @@ object DiscoveryCore {
         }
         ObjectOutputStream(configFile.outputStream()).use {
             val discoveryConfig = DiscoveryConfig()
-            discoveryConfig.mode = config.mode
+            discoveryConfig.workMode = config.workMode
             it.writeObject(discoveryConfig)
         }
     }

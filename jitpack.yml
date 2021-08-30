@@ -1,6 +1,0 @@
-jdk:
-  - openjdk11
-install:
-  - chmod +x gradlew
-  - ./gradlew build
-  - ./gradlew publishToMavenLocal -Pgroup=cn.numeron
