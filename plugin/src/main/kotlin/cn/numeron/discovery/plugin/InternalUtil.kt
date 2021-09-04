@@ -107,6 +107,11 @@ fun File.unzipTo(outputDir: File = File(parentFile, nameWithoutExtension)) {
 
 const val DISCOVERIES_CLASS = "cn/numeron/discovery/Discoveries.class"
 
+const val DISCOVERABLE_ANNOTATION = "Lcn/numeron/discovery/Discoverable;"
+
+const val IMPLEMENTATION_ANNOTATION = "Lcn/numeron/discovery/Implementation;"
+
+
 fun ZipFile.hasEntry(className: String): Boolean {
     val zipEntry = getEntry(className)
     return zipEntry != null

@@ -1,5 +1,5 @@
 package cn.numeron.discovery
 
-@Retention(AnnotationRetention.SOURCE)
+@Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS)
 annotation class Discoverable

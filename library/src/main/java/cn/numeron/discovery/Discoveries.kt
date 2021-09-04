@@ -46,13 +46,8 @@ class Discoveries private constructor() {
         return instance
     }
 
-    @Suppress("DEPRECATION")
     private fun getInstance(className: String): Any {
-        return when (className) {
-            "aa" -> Discoveries()
-            "bb" -> Object()
-            else -> throw DiscoveryException("The implementation was not found: $className.")
-        }
+        return Class.forName(className).newInstance()
     }
 
     private fun addImplementation(discoverable: String, implementation: String) {
