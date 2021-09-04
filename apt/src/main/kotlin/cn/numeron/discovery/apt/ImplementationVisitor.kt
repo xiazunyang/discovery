@@ -1,6 +1,7 @@
 package cn.numeron.discovery.apt
 
 import cn.numeron.discovery.core.DiscoverableImpl
+import cn.numeron.discovery.core.DiscoveryCore
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
@@ -13,10 +14,7 @@ class ImplementationVisitor(
     private val env: ProcessingEnvironment
 ) : SimpleElementVisitor9<Unit, Unit>(Unit) {
 
-    private val implementationMutableSet = mutableSetOf<DiscoverableImpl>()
-
-    val implementationSet: Set<DiscoverableImpl>
-        get() = implementationMutableSet
+    val implementationSet by lazy(DiscoveryCore::loadImplementation)
 
     override fun visitType(element: TypeElement, p: Unit) {
         if (element.kind == ElementKind.CLASS) {
@@ -31,7 +29,7 @@ class ImplementationVisitor(
             if (hasNoArgsConstructor) {
                 val qualifierName = element.qualifiedName.toString()
                 element.interfaces.map(TypeMirror::toString).forEach {
-                    implementationMutableSet.add(DiscoverableImpl(qualifierName, it))
+                    implementationSet.add(DiscoverableImpl(qualifierName, it))
                 }
             } else {
                 //如果没有无参构造器，则抛出异常

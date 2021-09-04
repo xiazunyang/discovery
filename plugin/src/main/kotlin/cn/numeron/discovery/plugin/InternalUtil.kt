@@ -1,116 +1,113 @@
 package cn.numeron.discovery.plugin
 
-import org.gradle.api.internal.file.archive.ZipCopyAction
-import org.gradle.util.TextUtil
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipException
-import java.util.zip.ZipFile
-import java.util.zip.ZipOutputStream
+import java.util.function.Function
+import java.util.zip.*
 
 fun String.toClassName() = replace('/', '.')
 
-fun File.zipTo(zipFile: File = File(parentFile, "$name.jar")) {
-    zipTo(zipFile, this, walkReproducibly())
+class NamedConverter(
+    val name: String,
+    val converter: Function<InputStream, InputStream>? = null
+)
+
+fun File.copyTo(outputStream: OutputStream, vararg ignores: String) {
+    return copyTo(outputStream, *ignores.map { NamedConverter(it) }.toTypedArray())
 }
 
-fun File.unzipTo(outputDirectory: File = File(parent, nameWithoutExtension)): File {
-    ZipFile(this).use { zip ->
-        val outputDirectoryCanonicalPath = outputDirectory.canonicalPath
-        for (entry in zip.entries()) {
-            unzipEntryTo(outputDirectory, outputDirectoryCanonicalPath, zip, entry)
+fun File.copyTo(outputStream: OutputStream, vararg targets: NamedConverter) {
+    if (!isFile) throw IllegalArgumentException("input source must be file.")
+    val zipInputStream = ZipInputStream(inputStream().buffered())
+    val zipOutputStream = ZipOutputStream(outputStream.buffered())
+    var zipEntry: ZipEntry? = zipInputStream.nextEntry
+    while (zipEntry != null) {
+        val name = zipEntry.name
+        //判断class文件是否是需要处理的文件
+        val namedConverter = targets.find {
+            it.name == name
         }
+        //获取转换器
+        val converter = namedConverter?.converter
+        if (zipEntry.isDirectory) {
+            //如果是目录，则直接添加Entry，并结束
+            zipOutputStream.putNextEntry(zipEntry)
+            zipOutputStream.closeEntry()
+        } else if (namedConverter == null) {
+            //如果不是指定要处理的文件，则复制
+            zipOutputStream.putNextEntry(zipEntry)
+            zipInputStream.copyTo(zipOutputStream)
+            zipOutputStream.closeEntry()
+        } else if (converter != null) {
+            //如果指定了转换器，则转换输入流，并写入新的数据
+            zipOutputStream.putNextEntry(ZipEntry(name))
+            converter.apply(zipInputStream).copyTo(zipOutputStream)
+            zipOutputStream.closeEntry()
+        } else {
+            //其它情况则忽略掉该条目
+        }
+        zipOutputStream.flush()
+        //继续下一个
+        zipEntry = zipInputStream.nextEntry
     }
-    return outputDirectory
+    zipInputStream.close()
+    zipOutputStream.close()
 }
 
-fun File.walkReproducibly(): Sequence<File> = sequence {
-
-    require(isDirectory)
-
-    yield(this@walkReproducibly)
-
-    var directories: List<File> = listOf(this@walkReproducibly)
-    while (directories.isNotEmpty()) {
-        val subDirectories = mutableListOf<File>()
-        directories.forEach { dir ->
-            dir.listFilesOrdered().partition { it.isDirectory }.let { (childDirectories, childFiles) ->
-                yieldAll(childFiles)
-                childDirectories.let {
-                    yieldAll(it)
-                    subDirectories.addAll(it)
+fun File.zipTo(outputStream: OutputStream) {
+    if (!isDirectory) throw IllegalArgumentException("input source must be directory.")
+    val directoryPath = absolutePath
+    ZipOutputStream(outputStream.buffered()).use { zipOutputStream ->
+        walkTopDown()
+            .onEnter {
+                it.absolutePath.startsWith(directoryPath)
+            }
+            .filter {
+                it.absolutePath != directoryPath
+            }
+            .forEach { file ->
+                var entryName = file.path.removePrefix(directoryPath + "\\").replace('\\', '/')
+                if (file.isDirectory) {
+                    entryName += "/"
                 }
+                val zipEntry = ZipEntry(entryName)
+                zipEntry.time = file.lastModified()
+                zipOutputStream.putNextEntry(zipEntry)
+                if (!file.isDirectory) {
+                    file.inputStream().buffered().use { fileInputStream ->
+                        fileInputStream.copyTo(zipOutputStream)
+                    }
+                }
+                zipOutputStream.closeEntry()
+                zipOutputStream.flush()
+            }
+    }
+}
+
+fun File.unzipTo(outputDir: File = File(parentFile, nameWithoutExtension)) {
+    if (!isFile) throw IllegalArgumentException("input source must be file.")
+    val zipInputStream = ZipInputStream(inputStream().buffered())
+    var zipEntry: ZipEntry? = zipInputStream.nextEntry
+    while (zipEntry != null) {
+        val name = zipEntry.name
+        val entryFile = File(outputDir, name)
+        if (zipEntry.isDirectory) {
+            entryFile.mkdirs()
+        } else {
+            entryFile.outputStream().buffered().use {
+                zipInputStream.copyTo(it)
             }
         }
-        directories = subDirectories
+        zipInputStream.closeEntry()
+        zipEntry = zipInputStream.nextEntry
     }
+    zipInputStream.close()
 }
+
+const val DISCOVERIES_CLASS = "cn/numeron/discovery/Discoveries.class"
 
 fun ZipFile.hasEntry(className: String): Boolean {
     val zipEntry = getEntry(className)
     return zipEntry != null
 }
-
-private fun zipTo(zipFile: File, baseDir: File, files: Sequence<File>) {
-    zipTo(zipFile, fileEntriesRelativeTo(baseDir, files))
-}
-
-private fun fileEntriesRelativeTo(baseDir: File, files: Sequence<File>): Sequence<Pair<String, ByteArray>> =
-    files.filter { it.isFile }.map { file ->
-        val path = file.normalisedPathRelativeTo(baseDir)
-        val bytes = file.readBytes()
-        path to bytes
-    }
-
-private fun File.normalisedPathRelativeTo(baseDir: File) =
-    TextUtil.normaliseFileSeparators(relativeTo(baseDir).path)
-
-
-private fun zipTo(zipFile: File, entries: Sequence<Pair<String, ByteArray>>) {
-    zipTo(zipFile.outputStream(), entries)
-}
-
-private fun zipTo(outputStream: OutputStream, entries: Sequence<Pair<String, ByteArray>>) {
-    ZipOutputStream(outputStream).use { zos ->
-        entries.forEach { entry ->
-            val (path, bytes) = entry
-            zos.putNextEntry(
-                ZipEntry(path).apply {
-                    time = ZipCopyAction.CONSTANT_TIME_FOR_ZIP_ENTRIES
-                    size = bytes.size.toLong()
-                }
-            )
-            zos.write(bytes)
-            zos.closeEntry()
-        }
-    }
-}
-
-private fun unzipEntryTo(
-    outputDirectory: File,
-    outputDirectoryCanonicalPath: String,
-    zip: ZipFile,
-    entry: ZipEntry
-) {
-    val output = outputDirectory.resolve(entry.name)
-    if (!output.canonicalPath.startsWith(outputDirectoryCanonicalPath)) {
-        throw ZipException("Zip entry '${entry.name}' is outside of the output directory")
-    }
-    if (entry.isDirectory) {
-        output.mkdirs()
-    } else {
-        output.parentFile.mkdirs()
-        zip.getInputStream(entry).use { it.copyTo(output) }
-    }
-}
-
-private fun InputStream.copyTo(file: File): Long = file.outputStream().use { copyTo(it) }
-
-
-private fun File.listFilesOrdered(filter: ((File) -> Boolean)? = null): List<File> =
-    listFiles()
-        ?.let { if (filter != null) it.filter(filter) else it.asList() }
-        ?.sortedBy { it.name }
-        ?: emptyList()

@@ -1,17 +1,14 @@
 package cn.numeron.discovery.ksp
 
 import cn.numeron.discovery.core.DiscoverableImpl
+import cn.numeron.discovery.core.DiscoveryCore
 import com.google.devtools.ksp.getConstructors
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.*
-import javax.tools.Diagnostic
 
 class ImplementationVisitor(private val env: SymbolProcessorEnvironment) : KSVisitorVoid() {
 
-    private val implementationMutableSet = mutableSetOf<DiscoverableImpl>()
-
-    val implementationSet: Set<DiscoverableImpl>
-        get() = implementationMutableSet
+    val implementationSet by lazy(DiscoveryCore::loadImplementation)
 
     override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
         if (classDeclaration.classKind == ClassKind.CLASS) {
@@ -27,7 +24,7 @@ class ImplementationVisitor(private val env: SymbolProcessorEnvironment) : KSVis
                     .forEach {
                         val implementationName = classDeclaration.getQualifierName()
                         val discoverableImpl = DiscoverableImpl(implementationName, it.getQualifierName())
-                        implementationMutableSet.add(discoverableImpl)
+                        implementationSet.add(discoverableImpl)
                     }
             } else {
                 //如果没有无参构造器，则抛出异常

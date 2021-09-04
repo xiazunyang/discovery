@@ -4,6 +4,7 @@ import java.io.File
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 
+@Suppress("UNCHECKED_CAST")
 object DiscoveryCore {
 
     const val PROJECT_NAME = "projectName"
@@ -18,14 +19,21 @@ object DiscoveryCore {
 
     fun init(projectName: String?, rootProjectBuildDir: String?) {
         if (projectName.isNullOrEmpty()) {
-            throw IllegalArgumentException("Please add ksp arg: `arg(\"$PROJECT_NAME\": name)`.")
+            throw IllegalArgumentException("Please add argument: `arg(\"$PROJECT_NAME\": name)`.")
         }
         if (rootProjectBuildDir.isNullOrBlank()) {
-            throw IllegalArgumentException("Please add ksp arg: `arg(\"$ROOT_PROJECT_BUILD_DIR\": rootProject.buildDir.absolutePath)`.")
+            throw IllegalArgumentException("Please add argument: `arg(\"$ROOT_PROJECT_BUILD_DIR\": rootProject.buildDir.absolutePath)`.")
         }
         this.projectName = projectName
-        this.rootProjectBuildDir =
-            rootProjectBuildDir + File.separator + "numeron" + File.separator + "discovery"
+        this.rootProjectBuildDir = rootProjectBuildDir + File.separator + "numeron" + File.separator + "discovery"
+    }
+
+    /** 获取Discovery处理的文件中最后修改的时间 */
+    fun lastModifiedTime(): Long {
+        val rootProjectBuildDir = File(rootProjectBuildDir)
+        return rootProjectBuildDir
+            .walkTopDown()
+            .maxOf(File::lastModified)
     }
 
     /** 保存本模块中被标记的接口 */
@@ -40,10 +48,25 @@ object DiscoveryCore {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
+    /** 加载本模块中被标记的接口 */
     fun loadDiscoverable(): MutableSet<String> {
         val discoverableSet = mutableSetOf<String>()
-        //加载根模块中的实现类
+        //只读取本模块中的实现类
+        val file = File(rootProjectBuildDir, DISCOVERABLE_DIR_NAME + File.separator + projectName)
+        if (!file.exists()) {
+           return discoverableSet
+        }
+        ObjectInputStream(file.inputStream()).use {
+            val readObject = it.readObject()
+            val set = readObject as Set<String>
+            discoverableSet.addAll(set)
+        }
+        return discoverableSet.toMutableSet()
+    }
+
+    /** 加载所有被标记的接口 */
+    fun loadAllDiscoverable(): MutableSet<String> {
+        val discoverableSet = mutableSetOf<String>()
         File(rootProjectBuildDir, DISCOVERABLE_DIR_NAME)
             .listFiles()
             ?.forEach { file ->
@@ -53,7 +76,7 @@ object DiscoveryCore {
                     discoverableSet.addAll(set)
                 }
             }
-        return discoverableSet.toMutableSet()
+        return discoverableSet
     }
 
     /** 保存本模块中的实现类 */
@@ -69,8 +92,24 @@ object DiscoveryCore {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
+    /** 加载本模块中的实现类 */
     fun loadImplementation(): MutableSet<DiscoverableImpl> {
+        val implementationSet = mutableSetOf<DiscoverableImpl>()
+        //只读取本模块中的数据
+        val file = File(rootProjectBuildDir, IMPLEMENTATION_DIR_NAME + File.separator + projectName)
+        if (!file.exists()) {
+            return implementationSet
+        }
+        ObjectInputStream(file.inputStream()).use {
+            val readObject = it.readObject()
+            val set = readObject as Set<DiscoverableImpl>
+            implementationSet.addAll(set)
+        }
+        return implementationSet
+    }
+
+    /** 加载所有的实现类 */
+    fun loadAllImplementation(): MutableSet<DiscoverableImpl> {
         val implementationSet = mutableSetOf<DiscoverableImpl>()
         //加载根模块中的实现类
         File(rootProjectBuildDir, IMPLEMENTATION_DIR_NAME)
@@ -82,7 +121,7 @@ object DiscoveryCore {
                     implementationSet.addAll(set)
                 }
             }
-        return implementationSet.toMutableSet()
+        return implementationSet
     }
 
     /** 保存Discovery的配置 */

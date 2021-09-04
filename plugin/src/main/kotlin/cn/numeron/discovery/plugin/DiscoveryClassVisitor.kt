@@ -1,9 +1,6 @@
 package cn.numeron.discovery.plugin
 
-import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Type
+import org.objectweb.asm.*
 import org.objectweb.asm.commons.AdviceAdapter
 import org.objectweb.asm.commons.Method
 
@@ -21,12 +18,12 @@ class DiscoveryClassVisitor(
     ): MethodVisitor? {
         val methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions)
         if (name == "<init>" && descriptor == "()V") {
-            return DiscoveryAdviceAdapter(api, methodVisitor, access, name, descriptor)
+            return DiscoveryConstructorAdviceAdapter(api, methodVisitor, access, name, descriptor)
         }
         return methodVisitor
     }
 
-    inner class DiscoveryAdviceAdapter(
+    inner class DiscoveryConstructorAdviceAdapter(
         api: Int,
         methodVisitor: MethodVisitor?,
         access: Int,
@@ -34,18 +31,38 @@ class DiscoveryClassVisitor(
         descriptor: String?
     ) : AdviceAdapter(api, methodVisitor, access, name, descriptor) {
 
+        private var intercept = true
+
         private val discoveriesType = Type.getType("Lcn/numeron/discovery/Discoveries;")
         private val addImplementationMethod = Method("addImplementation", "(Ljava/lang/String;Ljava/lang/String;)V")
 
-        override fun visitInsn(opcode: Int) {
-            if (opcode == ARETURN || opcode == RETURN) {
-                discoverableImpl.forEach { (discoverable, implList) ->
-                    implList.forEach { implementation ->
-                        insertCode(discoverable, implementation)
-                    }
+        override fun visitLdcInsn(value: Any?) {
+            //在开始织入代码之前，拦截所有的局部变量声明
+            if (!intercept) {
+                super.visitLdcInsn(value)
+            }
+        }
+
+        override fun visitMethodInsn(
+            opcodeAndSource: Int,
+            owner: String?,
+            name: String?,
+            descriptor: String?,
+            isInterface: Boolean
+        ) {
+            //在开始织入代码之前，拦截所有的addImplementation调用
+            if (!intercept || "addImplementation" != name) {
+                super.visitMethodInsn(opcodeAndSource, owner, name, descriptor, isInterface)
+            }
+        }
+
+        override fun onMethodExit(opcode: Int) {
+            intercept = false
+            discoverableImpl.forEach { (discoverable, implList) ->
+                implList.forEach { implementation ->
+                    insertCode(discoverable, implementation)
                 }
             }
-            super.visitInsn(opcode)
         }
 
         private fun insertCode(discoverable: String, implementation: String) {

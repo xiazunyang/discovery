@@ -11,14 +11,15 @@ import com.android.build.api.transform.QualifiedContent
 import org.gradle.api.Project
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.util.jar.JarFile
 
 class DiscoveryTransform(project: Project) : AbstractTransform(project) {
 
-    private val discoverableSet by lazy(DiscoveryCore::loadDiscoverable)
-    private val implementationSet by lazy(DiscoveryCore::loadImplementation)
+    private val discoverableSet by lazy(DiscoveryCore::loadAllDiscoverable)
+    private val implementationSet by lazy(DiscoveryCore::loadAllImplementation)
 
     private val isMarkMode by lazy {
         DiscoveryCore.loadConfig().workMode == Modes.Mark
@@ -35,9 +36,13 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
 
     override fun isIncremental(): Boolean = true
 
+    override fun getParameterInputs(): MutableMap<String, Any> {
+        return mutableMapOf("last_modified_time" to DiscoveryCore.lastModifiedTime())
+    }
+
     override fun processDirectory(dirInput: DirectoryInput, outputDirFile: File) {
         if (isMarkMode) {
-            //如果配置为消极模式，则直接返回
+            //如果配置为标记模式，则直接返回
             return
         }
         outputDirFile.walkTopDown()
@@ -54,11 +59,12 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
         val jarFile = JarFile(outputJarFile)
         if (discoveryLibraryJarFilePath == null) {
             if (jarFile.hasEntry(DISCOVERIES_CLASS)) {
+                wLog("discovery library jar file path: $outputJarFile.")
                 discoveryLibraryJarFilePath = outputJarFile.absolutePath
             }
         }
         if (isMarkMode) {
-            //如果配置为消极模式，则直接返回
+            //如果配置为标记模式，则直接返回
             return
         }
         //只扫描工程中的源码文件
@@ -101,7 +107,6 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
             //如果是主动的处理方式，则将扫描到的结果保存起来，否则无需保存
             DiscoveryCore.saveImplementation(implementationSet)
         }
-
         //整理为需要的格式
         val discoverableImpl = implementationSet
             .groupBy(DiscoverableImpl::discoverableName)
@@ -113,36 +118,20 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
             .mapValues {
                 it.value.map(DiscoverableImpl::qualifierName)
             }
-
         //获取Discoveries.class所在的jar包
         val jarFile = File(discoveryLibraryJarFilePath ?: throw NullPointerException("Not found Discovery Library."))
-
-        //解压，获取Discoveries.class
-        val unzipPath = jarFile.unzipTo()
-        val classFile = unzipPath.walkTopDown().first {
-            it.isFile && it.name == "Discoveries.class"
-        }
-
-        //修改字节码
-        val classReader = ClassReader(classFile.readBytes())
-        val classWriter = ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
-        val visitor = DiscoveryClassVisitor(classWriter, discoverableImpl)
-        classReader.accept(visitor, 0)
-
-        //重新写入到文件
-        classFile.writeBytes(classWriter.toByteArray())
-
-        //重新打包为jar文件
-        unzipPath.zipTo()
-
-        //删除解压的文件
-        unzipPath.deleteRecursively()
-    }
-
-    companion object {
-
-        const val DISCOVERIES_CLASS = "cn/numeron/discovery/Discoveries.class"
-
+        //创建一个字节数组输出流，保存修改后的class数据
+        val tempOutputStream = ByteArrayOutputStream()
+        jarFile.copyTo(tempOutputStream, NamedConverter(DISCOVERIES_CLASS) {
+            val classReader = ClassReader(it)
+            val classWriter = ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
+            val visitor = DiscoveryClassVisitor(classWriter, discoverableImpl)
+            classReader.accept(visitor, 0)
+            //获取修改后的class，并将数据转为输入流
+            classWriter.toByteArray().inputStream()
+        })
+        //将新文件的数据覆盖到原文件
+        jarFile.writeBytes(tempOutputStream.toByteArray())
     }
 
 }

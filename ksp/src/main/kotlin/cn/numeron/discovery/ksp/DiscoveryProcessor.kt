@@ -37,7 +37,8 @@ class DiscoveryProcessor(private val env: SymbolProcessorEnvironment) : SymbolPr
 
     override fun finish() {
         DiscoveryCore.saveDiscoverable(discoverableVisitor.discoverableSet)
-        env.logger.info("discovery processor finish. found discoverable: ${discoverableVisitor.discoverableSet}")
+        println("discovery process finish. found discoverable: ${discoverableVisitor.discoverableSet}")
+        env.logger.info("discovery process finish. found discoverable: ${discoverableVisitor.discoverableSet}")
         if (discoveryConfig.workMode == Modes.Mark) {
             DiscoveryCore.saveImplementation(implementationVisitor.implementationSet)
             env.logger.info("discovery processor finish. found implementation: ${implementationVisitor.implementationSet}")

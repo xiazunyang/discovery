@@ -38,7 +38,7 @@ abstract class AbstractTransform(protected val project: Project) : Transform() {
                 if (isIncremental && jarInput.status == Status.REMOVED) {
                     //如果开启了增量编译并且当该jar被移除，则从输出目录中移除掉
                     FileUtils.deleteDirectory(outputJarFile)
-                } else {
+                } else if (jarInput.status != Status.NOTCHANGED || !outputJarFile.exists()) {
                     //如果没有开启增量编译，或者jar是其它状态，则复制到输出目录
                     FileUtils.copyFile(jarInput.file, outputJarFile)
                 }
@@ -49,13 +49,31 @@ abstract class AbstractTransform(protected val project: Project) : Transform() {
             }
 
             for (dirInput in transformInput.directoryInputs) {
-                //复制到输出目录
+                val changedFiles = dirInput.changedFiles
+                //获取输出目录
                 val outputDir = outputProvider.getContentLocation(
                     dirInput.name, dirInput.contentTypes, dirInput.scopes, Format.DIRECTORY
                 )
-                FileUtils.copyDirectory(dirInput.file, outputDir)
-                //在输出目录中处理本地class
-                processDirectory(dirInput, outputDir)
+                if (changedFiles.isNotEmpty()) {
+                    for ((changedFile, status) in changedFiles) {
+                        if (isIncremental && status == Status.REMOVED) {
+                            //如果开启了增量编译并且当该文件被移除，则从输出目录中移除掉
+                            FileUtils.deleteDirectory(outputDir)
+                        } else if (status != Status.NOTCHANGED) {
+                            //如果没有开启增量编译，并且文件不是未改变的状态，则复制到输出目录
+                            FileUtils.copyFile(changedFile, outputDir)
+                        }
+                        if (!isIncremental || status != Status.REMOVED) {
+                            //在输出目录中处理文件
+                            processDirectory(dirInput, outputDir)
+                        }
+
+                    }
+                } else {
+                    FileUtils.copyDirectory(dirInput.file, outputDir)
+                    //在输出目录中处理本地class
+                    processDirectory(dirInput, outputDir)
+                }
             }
         }
         onTransformed()

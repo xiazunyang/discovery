@@ -13,7 +13,7 @@ class Discoveries private constructor() {
     private val instanceOfMap = mutableMapOf<String, WeakReference<Any>>()
 
     /** 记录已发现的服务 */
-    private val discovered = mutableMapOf<String, MutableList<String>>()
+    private val discovered = mutableMapOf<String, MutableSet<String>>()
 
     fun <T> getInstance(clazz: Class<T>): T {
         if (!clazz.isInterface) {
@@ -36,21 +36,29 @@ class Discoveries private constructor() {
     }
 
     /** 从缓存中获取实例，如果没有，则创建一条保存到缓存中并返回 */
-    @Suppress("DEPRECATION")
     private fun getOrPutInstance(className: String): Any {
         var instance = instanceOfMap[className]?.get()
         if (instance != null) {
             return instance
         }
-        instance = Class.forName(className).newInstance()
+        instance = getInstance(className)
         instanceOfMap[className] = WeakReference(instance)
         return instance
     }
 
+    @Suppress("DEPRECATION")
+    private fun getInstance(className: String): Any {
+        return when (className) {
+            "aa" -> Discoveries()
+            "bb" -> Object()
+            else -> throw DiscoveryException("The implementation was not found: $className.")
+        }
+    }
+
     private fun addImplementation(discoverable: String, implementation: String) {
-        val list = discovered[discoverable] ?: mutableListOf()
-        list.add(implementation)
-        discovered[discoverable] = list
+        val mutableSet = discovered[discoverable] ?: mutableSetOf()
+        mutableSet.add(implementation)
+        discovered[discoverable] = mutableSet
     }
 
     companion object {
