@@ -4,13 +4,11 @@ buildscript {
         google()
         mavenCentral()
         gradlePluginPortal()
-        maven("https://maven.aliyun.com/repository/google")
-        maven("https://maven.aliyun.com/repository/central")
-        maven("https://maven.aliyun.com/repository/jcenter")
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.21")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.30")
         classpath("com.vanniktech:gradle-maven-publish-plugin:0.17.0")
+        classpath("com.github.gmazzo:gradle-buildconfig-plugin:3.0.3")
     }
 }
 
@@ -18,10 +16,6 @@ subprojects {
     repositories {
         google()
         mavenCentral()
-        gradlePluginPortal()
-        maven("https://maven.aliyun.com/repository/google")
-        maven("https://maven.aliyun.com/repository/central")
-        maven("https://maven.aliyun.com/repository/jcenter")
     }
 }
 
