@@ -8,7 +8,16 @@
 
 ### 原理
 
-`Discovery`会在编译时扫描每个模块中的类文件，并将所有标记的接口和实现类的信息通过`ASM`注册到`Discoveries`类中。
+`Discovery`由3个功能模块构成，分别是注解处理器模块、`Gradle`插件模块以及一个`kotlin`库模块。
+
+- `kotlin`模块
+    - 包含两个注解，及一个`Discoveries`类。
+
+- 注解处理器模块
+    - 在编译前，获取所有被`Discoverable`注解标记的接口的信息，生成一个列表并记录下来。
+
+- `Gradle`插件模块
+    - 在编译中，扫描每个模块中的类文件，并将上述列表中接口的实现类通过`ASM`注册到`Discoveries`类中。
 
 ### 安装
 
@@ -20,19 +29,77 @@
        repositories {
            ...
            mavenCentral()
+           //如果使用KSP，则必需配置以下仓库
+           google()
+           gradlePluginPortal()
        }
        dependencies {
            ...
            //添加Discovery插件
            classpath("cn.numeron:discovery.plugin:latest_version")
+           //添加KSP插件，如果使用APT，则不需要添加
+           classpath("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.5.30-1.0.0-beta08")
        }
     }
    ```
 
-2. 在业务模块的`build.gradle`文件中添加以下代码：
+2. 在需要使用注解的模块中启用注解处理器，选择`apt`或`ksp`其中的一种方式配置即可。
+    - `KSP`方式(`Kotlin`工程推荐使用)
+   ```kotlin
+   plugins {
+       id("com.android.library")
+       ...
+       //应用KSP插件
+       id("com.google.devtools.ksp")
+   }
+   
+   ...
+   
+   dependencies {
+       ...
+       //应用Discovery的KSP插件
+       ksp("cn.numeron:discovery.ksp:latest_version")
+       //添加Discovery library库
+       implementation("cn.numeron:discovery.library:latest_version")
+   }
+   
+   ...
+   
+   ksp {
+       //设置此模块的唯一标识和编译根目录
+       arg("projectName", "module-name")
+       arg("rootProjectBuildDir", rootProject.buildDir.absolutePath)
+   }
+   ```
+    * `APT`方式(`Java`请使用此方式)
     ```kotlin
-    api("cn.numeron:discovery.library:latest_version")
-    ```    
+     plugins {
+         id("com.android.library")
+         ...
+         //应用kapt插件
+         id("kotlin-kapt")
+     }
+     
+     ...
+     
+     dependencies {
+         ...
+         //应用Discovery的APT插件
+         kapt("cn.numeron:discovery.apt:latest_version")
+         //添加Discovery library库
+         implementation("cn.numeron:discovery.library:latest_version")
+     }
+     
+     ...
+     
+     kapt {
+        arguments {
+            //设置此模块的唯一标识和编译根目录
+            arg("projectName", "asset-api")
+            arg("rootProjectBuildDir", rootProject.buildDir.absolutePath)
+        }
+     }
+     ```
 
 3. 在主模块的`build.gradle`文件中添加以下代码：
     ```kotlin
@@ -44,11 +111,26 @@
    }
     ```
 
+### 配置
+
+- `Discovery`默认情况下，通过扫描所有的`class`文件来获取接口的实现类，在大型项目中可能比较慢。为了节省编译时间，在`1.2.0`版本开始加入了可配置功能，配置方式如下：
+
+    ```kotlin
+    //在应用了Discovery插件的模块的build.gradle文件中添加以下代码
+    discovery {
+        //Discovery有scan和mark两种工作模式
+        //scan为默认工作模式，会扫描除依赖以外所有的类文件
+        //mark为可选的工作模式，此模式下只会处理被Implementation注解标记的类文件
+        //mark模式需要在每一个实现类上添加Implementation注解，并配置注解处理器方可工作
+        mode = "mark"
+    }
+    ```
+
 ### 使用
 
 - 获取其它模块的业务服务
 
-    1. 声明接口时标记`@Discovrable`注解
+    1. 在接口上使用`@Discovrable`注解
 
     ```kotlin
     @Discoverable
@@ -63,10 +145,10 @@
   }
     ```
 
-    2. 在任意模块中实现该接口，要求拥有无参构造方法，并标记`Implementation`注解
+    2. 在任意模块中实现`ISignInService`接口
 
     ```kotlin
-    @Implementation
+    //如果工作模式配置为Mark，需要在此类上添加Implementation注解
     class SignInServiceImpl: ISignInService {
     
         override suspend fun isSignIn(context: Context): Boolean {
@@ -107,7 +189,7 @@
 
     ```kotlin
     //需要初始化的A模块
-    @Implementation
+    //如果工作模式配置为Mark，需要在此类上添加Implementation注解
     class AModuleInitializer: IInitializer {
         override fun init(application: Application) {
             //init a module
@@ -115,7 +197,7 @@
     }
     
     //需要初始化的B模块
-    @Implementation
+    //如果工作模式配置为Mark，需要在此类上添加Implementation注解
     class BModuleInitializer: IInitializer {
         override fun init(application: Application) {
             //init b module
@@ -139,10 +221,6 @@
     ```
 
 ### 版本更新记录
-
-- 1.3.0
-    * 去除注解处理器模块，使配置简化。[查看之前的配置流程](README_1.2.2.md)
-    * 修复增量编译的一些问题。 
 
 - 1.2.2
     * 使用字符串作为配置名称，不再需要冗长的导包。

@@ -4,7 +4,7 @@ import org.objectweb.asm.*
 import org.objectweb.asm.commons.AdviceAdapter
 import org.objectweb.asm.commons.Method
 
-class DiscoveryClassVisitor(
+class DiscoveriesClassModifyVisitor(
     classVisitor: ClassVisitor,
     private val discoverableImpl: Map<String, List<String>>
 ) : ClassVisitor(Opcodes.ASM9, classVisitor) {

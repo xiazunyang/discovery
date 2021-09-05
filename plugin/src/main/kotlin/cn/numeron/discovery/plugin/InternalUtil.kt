@@ -10,7 +10,7 @@ fun String.toClassName() = replace('/', '.')
 
 class NamedConverter(
     val name: String,
-    val converter: Function<InputStream, InputStream>? = null
+    val converter: Function<ByteArray, ByteArray>? = null
 )
 
 fun File.copyTo(outputStream: OutputStream, vararg ignores: String) {
@@ -42,7 +42,7 @@ fun File.copyTo(outputStream: OutputStream, vararg targets: NamedConverter) {
         } else if (converter != null) {
             //如果指定了转换器，则转换输入流，并写入新的数据
             zipOutputStream.putNextEntry(ZipEntry(name))
-            converter.apply(zipInputStream).copyTo(zipOutputStream)
+            converter.apply(zipInputStream.readBytes()).let(zipOutputStream::write)
             zipOutputStream.closeEntry()
         } else {
             //其它情况则忽略掉该条目

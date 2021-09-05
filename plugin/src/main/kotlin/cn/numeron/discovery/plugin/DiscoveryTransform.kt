@@ -4,6 +4,8 @@ import com.android.build.api.transform.DirectoryInput
 import com.android.build.api.transform.JarInput
 import org.gradle.api.Project
 import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.util.jar.JarFile
@@ -11,7 +13,7 @@ import java.util.jar.JarFile
 class DiscoveryTransform(project: Project) : AbstractTransform(project) {
 
     private val discoverableSet = mutableSetOf<String>()
-    private val implementationSet = mutableMapOf<String, List<String>>()
+    private val implementationMap = mutableMapOf<String, List<String>>()
 
     /** Discovery库的jar文件路径 */
     private var discoveryLibraryJarFilePath: String? = null
@@ -23,14 +25,14 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
     override fun processDirectory(dirInput: DirectoryInput, outputDirFile: File) {
         outputDirFile.walkTopDown()
             .filter {
-                it.isFile && isClassFile(it.name)
+                it.isFile && isNeededClassFile(it.name)
             }
             .forEach {
                 scanClasses(it.readBytes())
             }
     }
 
-    private fun isClassFile(fileName: String): Boolean {
+    private fun isNeededClassFile(fileName: String): Boolean {
         return fileName.endsWith(".class")
                 && fileName != "R.class"
                 && !fileName.startsWith("BuildConfig")
@@ -50,7 +52,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
             .asSequence()
             .filter {
                 val name = it.name.substringAfterLast('/')
-                !it.isDirectory && isClassFile(name)
+                !it.isDirectory && isNeededClassFile(name)
             }
             .forEach {
                 val classBytes = jarFile.getInputStream(it).use(InputStream::readBytes)
@@ -61,35 +63,26 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
     /** 解析class文件，记录需要处理的class文件的路径 */
     private fun scanClasses(classBytes: ByteArray) {
         val classReader = ClassReader(classBytes)
-        val annotationVisitor = AnnotationVisitor()
-        classReader.accept(annotationVisitor, 0)
+        val discoveryVisitor = DiscoveryVisitor()
+        classReader.accept(discoveryVisitor, 0)
         val className = classReader.className.toClassName()
-        if (annotationVisitor.hasAnnotation(DISCOVERABLE_ANNOTATION)) {
-            if (annotationVisitor.isInterface()) {
+        if (discoveryVisitor.hasAnnotation(DISCOVERABLE_ANNOTATION)) {
+            if (discoveryVisitor.isInterface()) {
                 discoverableSet.add(className)
             }
         }
-        if (annotationVisitor.hasAnnotation(IMPLEMENTATION_ANNOTATION)) {
-            if (annotationVisitor.hasNoArgConstructor()) {
-                implementationSet[className] = annotationVisitor.interfaces
+        if (discoveryVisitor.hasAnnotation(IMPLEMENTATION_ANNOTATION)) {
+            if (discoveryVisitor.hasNoArgConstructor()) {
+                implementationMap[className] = discoveryVisitor.interfaces.map(String::toClassName)
             }
         }
     }
 
     override fun onTransformed() {
-        wLog("discoverableSet = $discoverableSet")
-        wLog("implementation = $implementationSet")
         //整理为需要的格式
-        /*val implementation = implementationSet
-            .groupBy(Implementation::discoverableName)
-            .toMap()
-            .filter {
-                //忽略没有注册过的接口
-                it.key in discoverableSet
-            }
-            .mapValues {
-                it.value.map(Implementation::qualifierName)
-            }
+        val implementations = implementationMap.mapValues { (_, value) ->
+            value.filter(discoverableSet::contains)
+        }
         //获取Discoveries.class所在的jar包
         val jarFile = File(discoveryLibraryJarFilePath ?: throw NullPointerException("Not found Discovery Library."))
         //创建一个字节数组输出流，保存修改后的class数据
@@ -97,13 +90,13 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
         jarFile.copyTo(tempOutputStream, NamedConverter(DISCOVERIES_CLASS) {
             val classReader = ClassReader(it)
             val classWriter = ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
-            val visitor = DiscoveryClassVisitor(classWriter, implementation)
+            val visitor = DiscoveriesClassModifyVisitor(classWriter, implementations)
             classReader.accept(visitor, 0)
-            //获取修改后的class，并将数据转为输入流
-            classWriter.toByteArray().inputStream()
+            //获取修改后的class
+            classWriter.toByteArray()
         })
         //将新文件的数据覆盖到原文件
-        jarFile.writeBytes(tempOutputStream.toByteArray())*/
+        jarFile.writeBytes(tempOutputStream.toByteArray())
     }
 
 }
