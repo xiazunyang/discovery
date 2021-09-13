@@ -12,7 +12,7 @@
 
 ### 安装
 
-当前最新版本：[![Maven Central](https://maven-badges.herokuapp.com/maven-central/cn.numeron/discovery.core/badge.svg)](https://mvnrepository.com/artifact/cn.numeron)
+当前最新版本：[![Maven Central](https://maven-badges.herokuapp.com/maven-central/cn.numeron/discovery.plugin/badge.svg)](https://mvnrepository.com/artifact/cn.numeron/discovery.plugin)
 
 1. 在根模块的`build.gradle`的适当位置添加以下代码：
     ```kotlin
