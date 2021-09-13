@@ -7,7 +7,7 @@ import org.objectweb.asm.commons.Method
 class DiscoveriesClassModifyVisitor(
     classVisitor: ClassVisitor,
     private val implementations: Map<String, List<String>>
-) : ClassVisitor(Opcodes.ASM9, classVisitor) {
+) : ClassVisitor(Opcodes.ASM7, classVisitor) {
 
     override fun visitMethod(
         access: Int,

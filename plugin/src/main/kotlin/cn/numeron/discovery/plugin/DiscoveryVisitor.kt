@@ -3,7 +3,7 @@ package cn.numeron.discovery.plugin
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 
-class DiscoveryVisitor : ClassNode(Opcodes.ASM9) {
+class DiscoveryVisitor : ClassNode(Opcodes.ASM7) {
 
     fun hasAnnotation(annotation: String): Boolean {
         invisibleAnnotations ?: return false

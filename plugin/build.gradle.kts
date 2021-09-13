@@ -15,9 +15,6 @@ tasks.withType<KotlinCompile> {
 dependencies {
     implementation(gradleApi())
 
-    implementation("org.ow2.asm:asm:9.2")
-    implementation("org.ow2.asm:asm-commons:9.2")
-
     implementation("commons-io:commons-io:2.11.0")
     implementation("com.android.tools.build:gradle:4.0.2")
 
