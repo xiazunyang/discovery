@@ -28,8 +28,7 @@ class Discoveries private constructor() {
         if (!clazz.isInterface) {
             throw DiscoveryException("Parameter must be a interface: $clazz.")
         }
-        val implementationList = discovered[clazz.name]
-            ?: throw DiscoveryException("The implementation was not found: $clazz.")
+        val implementationList = discovered[clazz.name] ?: return emptyList()
         return implementationList
             .map(::getOrPutInstance)
             .map(clazz::cast)
