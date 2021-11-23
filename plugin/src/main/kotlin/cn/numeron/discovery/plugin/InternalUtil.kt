@@ -1,7 +1,6 @@
 package cn.numeron.discovery.plugin
 
 import java.io.File
-import java.io.InputStream
 import java.io.OutputStream
 import java.util.function.Function
 import java.util.zip.*

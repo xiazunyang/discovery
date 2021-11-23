@@ -67,14 +67,12 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
         classReader.accept(discoveryVisitor, 0)
         val className = classReader.className.toClassName()
         if (discoveryVisitor.hasAnnotation(DISCOVERABLE_ANNOTATION)) {
-            if (discoveryVisitor.isInterface()) {
+            if (discoveryVisitor.isAbstract()) {
                 discoverableSet.add(className)
             }
         }
         if (discoveryVisitor.hasAnnotation(IMPLEMENTATION_ANNOTATION)) {
-            if (discoveryVisitor.hasNoArgConstructor()) {
-                implementationMap[className] = discoveryVisitor.interfaces.map(String::toClassName)
-            }
+            implementationMap[className] = discoveryVisitor.interfaces.map(String::toClassName)
         }
     }
 

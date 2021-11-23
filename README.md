@@ -1,14 +1,14 @@
 ## Discovery
 
-通过`KSP/APT`及`AGP`实现的在Android工程多模块之间获取接口的实例对象的辅助工具。
+通过`AGP`实现的在`Android`工程多模块之间获取接口或抽象类的实现类的实例的辅助工具。
 
-通过在接口上添加`@Discoverable`注解后，在工程中的任意模块中通过`Discoveries`类获取该接口的实例，辅助开发者在模块之间访问数据。
+通过在接口或抽象类上添加`@Discoverable`注解、并在实现类上添加`@Implementation`注解，就可以在工程中的任意模块中通过`Discoveries`类获取该接口或抽象类的实例，辅助开发者在模块之间访问数据。
 
 演示工程：https://github.com/xiazunyang/DiscoveryDemo.git
 
 ### 原理
 
-`Discovery`会在编译时扫描每个模块中的类文件，并将所有标记的接口和实现类的信息通过`ASM`注册到`Discoveries`类中。
+`Discovery`会在编译时扫描每个类文件，并将所有标记的类的信息通过`ASM`注册到`Discoveries`类中。
 
 ### 安装
 
@@ -139,6 +139,10 @@
     ```
 
 ### 版本更新记录
+- 1.4.0
+    * 添加抽象类的支持，不再强制要求参数是接口。
+    * 不强制要求实现类拥有无参构造，但是`Discovery`不再参与创建这一类实现类的实例。
+    * `Discoveries`中新增两个方法用于获取实现类的`Class`，方便用户自己创建它们的实例。
 
 - 1.3.3
     * 当`getAllInstances`没有获取到任何实例的时候，不再抛出异常，改为返回一个空的列表。

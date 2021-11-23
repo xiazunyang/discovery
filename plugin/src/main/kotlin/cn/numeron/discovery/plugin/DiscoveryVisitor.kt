@@ -12,17 +12,8 @@ class DiscoveryVisitor : ClassNode(Opcodes.ASM7) {
         }
     }
 
-    fun hasNoArgConstructor(): Boolean {
-        if (methods.isNullOrEmpty()) {
-            return false
-        }
-        return methods.any {
-            "<init>" == it.name && "()V" == it.desc && it.parameters.isNullOrEmpty()
-        }
-    }
-
-    fun isInterface(): Boolean {
-        return access and Opcodes.ACC_INTERFACE != 0
+    fun isAbstract(): Boolean {
+        return access and Opcodes.ACC_ABSTRACT != 0
     }
 
 }
