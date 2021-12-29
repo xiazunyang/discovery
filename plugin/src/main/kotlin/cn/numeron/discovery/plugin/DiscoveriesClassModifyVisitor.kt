@@ -6,7 +6,7 @@ import org.objectweb.asm.commons.Method
 
 class DiscoveriesClassModifyVisitor(
     classVisitor: ClassVisitor,
-    private val implementations: Map<String, List<String>>
+    private val discoveries: Map<String, List<String>>
 ) : ClassVisitor(Opcodes.ASM7, classVisitor) {
 
     override fun visitMethod(
@@ -58,8 +58,8 @@ class DiscoveriesClassModifyVisitor(
 
         override fun onMethodExit(opcode: Int) {
             intercept = false
-            implementations.forEach { (implementation, interfaces) ->
-                interfaces.forEach { discoverable ->
+            discoveries.forEach { (discoverable, implementations) ->
+                implementations.forEach { implementation ->
                     insertCode(discoverable, implementation)
                 }
             }

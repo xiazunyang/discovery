@@ -107,7 +107,7 @@
 
     ```kotlin
     //需要初始化的A模块
-    @Implementation
+    @Implementation(order = 0)
     class AModuleInitializer: IInitializer {
         override fun init(application: Application) {
             //init a module
@@ -115,7 +115,7 @@
     }
     
     //需要初始化的B模块
-    @Implementation
+    @Implementation(order = 10)
     class BModuleInitializer: IInitializer {
         override fun init(application: Application) {
             //init b module
@@ -131,6 +131,7 @@
             //获取所有IInitiator的实现，并执行init方法
             val initializerList = Discoveries.getAllInstances<IInitializer>()
             initializerList.forEach {
+                //order数值小的实现类优先调用
                 it.init(this)
             }
         }
@@ -139,6 +140,9 @@
     ```
 
 ### 版本更新记录
+- 1.4.1
+    * `Implementation`注解中添加`order`属性，用于给实现类排序。
+
 - 1.4.0
     * 添加抽象类的支持，不再强制要求参数是接口。
     * 不强制要求实现类拥有无参构造，但是`Discovery`不再参与创建这一类实现类的实例。

@@ -13,7 +13,7 @@ import java.util.jar.JarFile
 class DiscoveryTransform(project: Project) : AbstractTransform(project) {
 
     private val discoverableSet = mutableSetOf<String>()
-    private val implementationMap = mutableMapOf<String, List<String>>()
+    private val implementationSet = mutableSetOf<Implementation>()
 
     /** Discovery库的jar文件路径 */
     private var discoveryLibraryJarFilePath: String? = null
@@ -58,6 +58,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
                 val classBytes = jarFile.getInputStream(it).use(InputStream::readBytes)
                 scanClasses(classBytes)
             }
+        jarFile.close()
     }
 
     /** 解析class文件，记录需要处理的class文件的路径 */
@@ -72,15 +73,31 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
             }
         }
         if (discoveryVisitor.hasAnnotation(IMPLEMENTATION_ANNOTATION)) {
-            implementationMap[className] = discoveryVisitor.interfaces.map(String::toClassName)
+            implementationSet.add(
+                Implementation(
+                    className,
+                    discoveryVisitor.interfaces.map(String::toClassName),
+                    discoveryVisitor.order
+                )
+            )
         }
     }
 
     override fun onTransformed() {
         //整理为需要的格式
-        val implementations = implementationMap.mapValues { (_, value) ->
-            value.filter(discoverableSet::contains)
-        }
+        val discoveries = implementationSet
+            .map { implementation ->
+                implementation.superTypes
+                    .filter(discoverableSet::contains)
+                    .map {
+                        it to implementation
+                    }
+            }
+            .flatten()
+            .groupBy(Pair<String, Implementation>::first)
+            .mapValues {
+                it.value.map(Pair<String, Implementation>::second).sorted().map(Implementation::classpath)
+            }
         //获取Discoveries.class所在的jar包
         val jarFile = File(discoveryLibraryJarFilePath ?: throw NullPointerException("Not found Discovery Library."))
         //创建一个字节数组输出流，保存修改后的class数据
@@ -88,7 +105,7 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
         jarFile.copyTo(tempOutputStream, NamedConverter(DISCOVERIES_CLASS) {
             val classReader = ClassReader(it)
             val classWriter = ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
-            val visitor = DiscoveriesClassModifyVisitor(classWriter, implementations)
+            val visitor = DiscoveriesClassModifyVisitor(classWriter, discoveries)
             classReader.accept(visitor, 0)
             //获取修改后的class
             classWriter.toByteArray()
