@@ -1,17 +1,16 @@
 ## Discovery
 
-通过`AGP`实现的在`Android`工程多模块之间获取接口或抽象类的实现类的实例的辅助工具。
-
-相比`ARouter`等路由框架的服务发现功能，`Discovery`主要功能在编译期间工作，不会在运行时扫描`dex`，有更好的性能。
-相比`ServiceLoader`，`Discovery`支持抽象类，以及可以获取实现类的`class`对象，可以适配更丰富的其它框架。
-
+通过`AGP`实现的在`Android`工程多模块之间获取接口或抽象类的实现类的实例的辅助工具。  
 通过在接口或抽象类上添加`@Discoverable`注解、并在实现类上添加`@Implementation`注解，就可以在工程中的任意模块中通过`Discoveries`类获取该接口或抽象类的实例，辅助开发者在模块之间访问数据。
+
+相比`ARouter`等路由框架的服务发现功能，`Discovery`主要功能在编译期间工作，不会在运行时扫描`dex`，有更好的性能。  
+相比`ServiceLoader`，`Discovery`支持抽象类，以及可以获取实现类的`class`对象，可以适配更丰富的其它框架。  
 
 演示工程：https://github.com/xiazunyang/DiscoveryDemo.git
 
 ### 原理
 
-`Discovery`会在编译时扫描每个类文件，并将所有标记的类的信息通过`ASM`注册到`Discoveries`类中。
+`Discovery`会在编译时扫描每个类文件，并将所有标记的类的信息通过`ASM`注册到`Discoveries`类中。  
 
 ### 安装
 
