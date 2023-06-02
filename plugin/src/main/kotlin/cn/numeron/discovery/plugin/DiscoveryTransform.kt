@@ -73,10 +73,12 @@ class DiscoveryTransform(project: Project) : AbstractTransform(project) {
             }
         }
         if (discoveryVisitor.hasAnnotation(IMPLEMENTATION_ANNOTATION)) {
+            val interfaces = discoveryVisitor.interfaces.map(String::toClassName)
+            val superTypes = interfaces + discoveryVisitor.superName.toClassName()
             implementationSet.add(
                 Implementation(
                     className,
-                    discoveryVisitor.interfaces.map(String::toClassName),
+                    superTypes,
                     discoveryVisitor.order
                 )
             )
