@@ -1,4 +1,4 @@
-package cn.numeron.discovery.plugin
+package cn.numeron.discovery
 
 data class Implementation(
 

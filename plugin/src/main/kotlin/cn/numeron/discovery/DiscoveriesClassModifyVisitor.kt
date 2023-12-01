@@ -1,8 +1,8 @@
-package cn.numeron.discovery.plugin
+package cn.numeron.discovery
 
 import org.objectweb.asm.*
-import org.objectweb.asm.commons.AdviceAdapter
 import org.objectweb.asm.commons.Method
+import org.objectweb.asm.commons.AdviceAdapter
 
 class DiscoveriesClassModifyVisitor(
     classVisitor: ClassVisitor,

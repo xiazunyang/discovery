@@ -1,37 +1,50 @@
 ## Discovery
 
 通过`AGP`实现的在`Android`工程多模块之间获取接口或抽象类的实现类的实例的辅助工具。  
-通过在接口或抽象类上添加`@Discoverable`注解、并在实现类上添加`@Implementation`
-注解，就可以在工程中的任意模块中通过`Discoveries`类获取该接口或抽象类的实例，辅助开发者在模块之间访问数据。
+通过在接口或抽象类上添加`@Discoverable`注解、并在实现类上添加`@Implementation`注解，就可以在工程中的任意模块中通过`Discoveries`类获取该接口或抽象类的实例，辅助开发者在模块之间访问数据。
 
-相比`ARouter`等路由框架，`Discovery`主要功能在编译期间工作，有更好的性能；并且只提供服务发现功能，开发者可实现更丰富的功能。  
-相比`ServiceLoader`，`Discovery`支持抽象类，以及可以获取实现类的`class`对象，可以适配更丰富的其它框架。
+相比`ARouter`等路由框架的服务发现功能，`Discovery`主要功能在编译期间工作，不会在运行时扫描`dex`，有更好的性能。  
+相比`ServiceLoader`，`Discovery`支持抽象类，以及可以获取实现类的`class`对象，可以适配更丰富的其它框架。  
 
 演示工程：https://github.com/xiazunyang/DiscoveryDemo.git
 
 ### 原理
 
-`Discovery`会在编译时扫描每个类文件，并将所有标记的类的信息通过`ASM`注册到`Discoveries`类中。
+`Discovery`会在编译时扫描每个类文件，并将所有标记的类的信息通过`ASM`注册到`Discoveries`类中。  
 
 ### 安装
 
-当前最新版本：[![Maven Central](https://maven-badges.herokuapp.com/maven-central/cn.numeron/discovery.library/badge.svg)](https://mvnrepository.com/artifact/cn.numeron/discovery.library)
+当前最新版本：[![Maven Central](https://maven-badges.herokuapp.com/maven-central/cn.numeron/discovery.plugin/badge.svg)](https://mvnrepository.com/artifact/cn.numeron/discovery.plugin)
 
-1. 在`android`工程`app`模块的`build.gradle`的适当位置添加以下代码：
+1. 在根模块的`build.gradle`的适当位置添加以下代码：
+    ```kotlin
+    buildscript {
+       repositories {
+           ...
+           mavenCentral()
+       }
+       dependencies {
+           ...
+           //添加Discovery插件
+           classpath("cn.numeron:discovery.plugin:latest_version")
+       }
+    }
+   ```
+
+2. 在业务模块的`build.gradle`文件中添加以下代码：
+    ```kotlin
+    api("cn.numeron:discovery.library:latest_version")
+    ```    
+
+3. 在主模块的`build.gradle`文件中添加以下代码：
     ```kotlin
     plugins {
+        id("com.android.application")
         ...
-        id("cn.numeron.discovery") version "2.0.0"        
-    }
+        //应用Discovery插件
+        id("discovery")
+   }
     ```
-
-2. 在`android`工程中基础模块的`build.gradle`文件中添加以下代码：
-    ```kotlin
-    dependencies {
-        ...
-        api("cn.numeron:discovery.library:2.0.0")
-    }
-    ```    
 
 ### 使用
 
@@ -129,14 +142,9 @@
     ```
 
 ### 版本更新记录
-- **2.0.0**
-    * gradle版本更新至8.0。
-    
-
-- 1.4.2    
+- 1.4.2
     * 修复无法获取继承自抽象类的实现类的问题。
-    * [查看旧文档](README_1.4.2.md)
-    
+
 - 1.4.1
     * `Implementation`注解中添加`order`属性，用于给实现类排序。
 
@@ -153,11 +161,11 @@
 
 - 1.3.1
     * 修复`ASM`织入了错误的代码的问题。
-
+  
 - ~~1.3.0~~
     * **存在致命错误，请使用`1.3.1`版本**
     * 去除注解处理器模块，使配置简化。[查看之前的配置流程](README_1.2.2.md)
-    * 修复增量编译的一些问题。
+    * 修复增量编译的一些问题。 
 
 - 1.2.2
     * 使用字符串作为配置名称，不再需要冗长的导包。

@@ -1,0 +1,18 @@
+[versions]
+kotlin = "1.9.20"
+gradle-android = "8.1.2"
+discovery = "2.0.0"
+asm-version = "9.2"
+
+[libraries]
+android-gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle-android" }
+ow2-asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm-version" }
+ow2-asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm-version" }
+
+[plugins]
+publish = { id = "com.gradle.plugin-publish", version = "1.2.0" }
+discovery = { id = "cn.numeron.discovery", version.ref = "discovery" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version.ref = "gradle-android" }
+android-application = { id = "com.android.application", version.ref = "gradle-android" }

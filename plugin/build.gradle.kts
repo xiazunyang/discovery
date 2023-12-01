@@ -1,32 +1,36 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
-    id("kotlin")
-    id("com.vanniktech.maven.publish")
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.publish)
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "1.8"
-    }
+group = "cn.numeron"
+version = libs.versions.discovery.get()
+
+kotlin {
+    jvmToolchain(11)
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 dependencies {
-    implementation(gradleApi())
-
-    implementation("commons-io:commons-io:2.11.0")
-    implementation("com.android.tools.build:gradle:4.0.2")
-
-    testImplementation("junit:junit:4.13.2")
+    implementation(libs.android.gradle)
+    implementation(libs.ow2.asm.tree)
+    implementation(libs.ow2.asm.commons)
 }
 
-tasks.withType<Jar> {
-    into("/") {
-        from("libs")
+gradlePlugin {
+    website.set("https://github.com/xiazunyang/discovery")
+    vcsUrl.set("https://github.com/xiazunyang/discovery.git")
+    plugins {
+        create("discovery") {
+            id = "cn.numeron.discovery"
+            displayName = "Discovery Plugin"
+            description = "An android gradle plugin, helps android developers in multi-module projects to get their inaccessible instances from accessible abstract classes."
+            tags.set(listOf("discovery", "android", "router", "transform"))
+            implementationClass = "cn.numeron.discovery.DiscoveryPlugin"
+        }
     }
-}
-
-mavenPublish {
-    sonatypeHost = com.vanniktech.maven.publish.SonatypeHost.S01
 }

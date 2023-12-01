@@ -1,5 +1,6 @@
-package cn.numeron.discovery.plugin
+package cn.numeron.discovery
 
+import cn.numeron.discovery.DiscoveryTask.Companion.IMPLEMENTATION_ANNOTATION
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 
