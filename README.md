@@ -1,3 +1,5 @@
+### 中文 | [English](README_EN.md)
+
 ## Discovery
 
 通过`AGP`实现的在`Android`工程多模块之间获取接口或抽象类的实现类的实例的辅助工具。  
